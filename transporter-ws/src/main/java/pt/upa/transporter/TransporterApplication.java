@@ -2,6 +2,7 @@ package pt.upa.transporter;
 
 import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
+import pt.upa.transporter.ws.*;
 
 public class TransporterApplication {
 
