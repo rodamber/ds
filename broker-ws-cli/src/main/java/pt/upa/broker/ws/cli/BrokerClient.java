@@ -120,32 +120,29 @@ public class BrokerClient implements BrokerPortType {
 
     @Override
     public String ping(String name) {
-        return "Ping: " + name;
+        return port.ping(name);
     }
     
     @Override
     public String requestTransport(String origin, String destination, int price)
         throws InvalidPriceFault_Exception, UnavailableTransportFault_Exception, UnavailableTransportPriceFault_Exception, UnknownLocationFault_Exception{
-        /* TODO */
-        return null;
+        return port.requestTransport(origin, destination, price);
     }
     
     @Override
     public TransportView viewTransport(String id)
         throws UnknownTransportFault_Exception{
-        /* TODO */
-        return null;
+        return port.viewTransport(id);
     }
     
     @Override
     public List<TransportView> listTransports(){
-        /* TODO */
-        return null;
+        return port.listTransports();
     }
     
     @Override
     public void clearTransports(){
-        /* TODO */
+        port.clearTransports();
     }
 
 }
