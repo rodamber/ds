@@ -9,7 +9,7 @@ public class TransporterApplication {
 		// Check arguments
 		if (args.length == 0 || args.length == 2) {
 			System.err.println("Argument(s) missing!");
-			System.err.println("Usage: java " + CalcApplication.class.getName() + " wsURL OR uddiURL wsName wsURL");
+			System.err.println("Usage: java " + TransporterApplication.class.getName() + " wsURL OR uddiURL wsName wsURL");
 			return;
 		}
 		String uddiURL = null;
@@ -17,15 +17,15 @@ public class TransporterApplication {
 		String wsURL = null;
 
 		// Create server implementation object, according to options
-		CalcEndpointManager endpoint = null;
+		TransporterEndpointManager endpoint = null;
 		if (args.length == 1) {
 			wsURL = args[0];
-			endpoint = new CalcEndpointManager(wsURL);
+			endpoint = new TransporterEndpointManager(wsURL);
 		} else if (args.length >= 3) {
 			uddiURL = args[0];
 			wsName = args[1];
 			wsURL = args[2];
-			endpoint = new CalcEndpointManager(uddiURL, wsName, wsURL);
+			endpoint = new TransporterEndpointManager(uddiURL, wsName, wsURL);
 			endpoint.setVerbose(true);
 		}
 
