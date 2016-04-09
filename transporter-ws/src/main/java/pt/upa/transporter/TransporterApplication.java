@@ -7,44 +7,34 @@ public class TransporterApplication {
 
 	public static void main(String[] args) throws Exception {
 		// Check arguments
-		if (args.length < 3) {
+		if (args.length == 0 || args.length == 2) {
 			System.err.println("Argument(s) missing!");
-			System.err.printf("Usage: java %s uddiURL wsName wsURL%n", TransporterApplication.class.getName());
+			System.err.println("Usage: java " + CalcApplication.class.getName() + " wsURL OR uddiURL wsName wsURL");
 			return;
 		}
+		String uddiURL = null;
+		String wsName = null;
+		String wsURL = null;
 
-		String uddiURL = args[0];
-		String name = args[1];
-		String url = args[2];
-        
-		Endpoint endpoint = null;
-		UDDINaming uddiNaming = null;
-        
-        try {
-            //TODO
-            System.out.println(TransporterApplication.class.getSimpleName() + " starting...");
-            
-			endpoint = Endpoint.create(new ...);
+		// Create server implementation object, according to options
+		CalcEndpointManager endpoint = null;
+		if (args.length == 1) {
+			wsURL = args[0];
+			endpoint = new CalcEndpointManager(wsURL);
+		} else if (args.length >= 3) {
+			uddiURL = args[0];
+			wsName = args[1];
+			wsURL = args[2];
+			endpoint = new CalcEndpointManager(uddiURL, wsName, wsURL);
+			endpoint.setVerbose(true);
+		}
 
-			// publish endpoint
-			System.out.printf("Starting %s%n", url);
-			endpoint.publish(url);
-
-			// publish to UDDI
-			System.out.printf("Publishing '%s' to UDDI at %s%n", name, uddiURL);
-			uddiNaming = new UDDINaming(uddiURL);
-			uddiNaming.rebind(name, url);
-
-			// wait
-			System.out.println("Awaiting connections");
-			System.out.println("Press enter to shutdown");
-			System.in.read();
-        }
-        catch (Exception e) {
-			System.out.printf("Caught exception: %s%n", e);
-			e.printStackTrace();
-        }
-
+		try {
+			endpoint.start();
+			endpoint.awaitConnections();
+		} finally {
+			endpoint.stop();
+		}
 	}
 
 }
