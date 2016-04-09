@@ -1,4 +1,4 @@
-package pt.upa.transporter;
+package pt.upa.transporter.ws;
 
 import java.io.IOException;
 import javax.xml.ws.Endpoint;
