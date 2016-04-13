@@ -1,6 +1,8 @@
 package pt.upa.transporter.ws;
 
-import java.util.List;
+import java.util.Arrays;
+import pt.upa.transporter.Utils;
+
 import javax.jws.WebService;
 
 @WebService(
@@ -9,13 +11,13 @@ import javax.jws.WebService;
     wsdlLocation      = "transporter.1_0.wsdl",
     serviceName       = "TransporterService",
     portName          = "TransporterPort",
-    endpointInterface = "transporter.TransporterPortType"
+    endpointInterface = "pt.upa.transporter.ws.TransporterPortType"
 )
 
 public class TransporterPort implements TransporterPortType {
 
     private TransporterEndpointManager endpoint;
-
+    
     public TransporterPort(TransporterEndpointManager endpoint) {
         this.endpoint = endpoint;
     }
@@ -32,7 +34,36 @@ public class TransporterPort implements TransporterPortType {
     @Override
     public JobView requestJob(String origin, String destination, int price)
         throws BadLocationFault_Exception, BadPriceFault_Exception {
-        /* RODRIGO:FIXME:TODO */
+    	
+    	int transporterID = Utils.getTransporterID(endpoint.getWsName());
+    	    	
+    	if(!Utils.isCityNameValid(origin)){
+    		throw new BadLocationFault_Exception(origin + " is not a valid city name", new BadLocationFault());
+    	}
+    	else if(!Utils.isCityNameValid(destination)){
+    		throw new BadLocationFault_Exception(origin + " is not a valid city name", new BadLocationFault());
+    	}
+    	else if(price < 0){
+    		throw new BadPriceFault_Exception("Price must be greater than 0", new BadPriceFault());
+    	}
+    	
+    	if(!Utils.transporterServesCity(transporterID, origin) || !Utils.transporterServesCity(transporterID, destination)){
+    		return null;
+    	}
+    	else if(price > 100){
+    		return null;
+    	}
+    	else if(price > 10){
+    		if(price % 2 == transporterID % 2){
+    			//TODO FAZ OFERTA ABAIXO DO PREÇO
+    		}
+    		else{
+    			//TODO FAZ OFERTA ACIMA DO PREÇO
+    		}
+    	}
+    	
+    	//TODO RESTO
+    	
         return null;
     }
 

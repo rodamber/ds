@@ -4,6 +4,8 @@ import java.io.IOException;
 import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 
+import pt.upa.broker.ws.BrokerPort;
+
 /** Endpoint manager */
 public class BrokerEndpointManager {
 

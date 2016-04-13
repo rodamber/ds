@@ -22,7 +22,7 @@ public class BrokerClientApplication {
         }
 
         // Create client
-        BrokerClient client = null;
+        BrokerClient client = null;	
 
         if (wsURL != null) {
             System.out.printf("Creating client for server at %s%n", wsURL);

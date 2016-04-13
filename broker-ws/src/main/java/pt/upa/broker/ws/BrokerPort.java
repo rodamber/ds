@@ -9,7 +9,7 @@ import javax.jws.WebService;
     wsdlLocation      = "broker.1_0.wsdl",
     serviceName       = "BrokerService",
     portName          = "BrokerPort",
-    endpointInterface = "broker.BrokerPortType"
+    endpointInterface = "pt.upa.broker.ws.BrokerPortType"
 )
 public class BrokerPort implements BrokerPortType {
 

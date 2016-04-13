@@ -24,6 +24,11 @@
         <mainclass>pt.upa.transporter.TransporterClientApplication</mainclass>
 
         <ws.name>UpaTransporter</ws.name>
+        <ws.host>localhost</ws.host>
+        <ws.i>1</ws.i>
+        <ws.port>808${ws.i}</ws.port>
+        <ws.url>http://${ws.host}:${ws.port}/transporter-ws/endpoint</ws.url>
+        
         <uddi.url>http://localhost:9090</uddi.url>
     </properties>
 

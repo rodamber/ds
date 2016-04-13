@@ -31,7 +31,10 @@ public class TransporterClientApplication {
             System.out.printf("Creating client using UDDI at %s for server with name %s%n", uddiURL, wsName);
             client = new TransporterClient(uddiURL, wsName);
         }
-
+        
+        System.out.println("Invoking ping(\"Who cares?\")");
+        String result = client.ping("Who cares?");
+        System.out.println(result);
         
         /* *********************************************
         

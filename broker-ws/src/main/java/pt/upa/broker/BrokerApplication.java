@@ -2,6 +2,7 @@ package pt.upa.broker;
 
 import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
+import pt.upa.transporter.ws.cli.*;
 import pt.upa.broker.ws.*;
 
 public class BrokerApplication {
@@ -16,6 +17,8 @@ public class BrokerApplication {
         String uddiURL = null;
         String wsName = null;
         String wsURL = null;
+        
+        //TransporterClient transporter1 = new TransporterClient();
 
         // Create server implementation object, according to options
         BrokerEndpointManager endpoint = null;
