@@ -1,6 +1,7 @@
 package pt.upa.transporter.ws;
 
 import java.util.Arrays;
+import java.util.List;
 import pt.upa.transporter.Utils;
 
 import javax.jws.WebService;
