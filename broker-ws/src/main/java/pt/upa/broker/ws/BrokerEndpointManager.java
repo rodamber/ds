@@ -19,6 +19,10 @@ public class BrokerEndpointManager {
         return wsName;
     }
 
+    public String getUddiURL() {
+        return uddiURL;
+    }
+
     /** Web Service location to publish */
     private String wsURL = null;
 
