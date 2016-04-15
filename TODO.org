@@ -1,4 +1,7 @@
 * SD 
+Região Norte:  Porto,   Braga,  Viana do Castelo, Vila Real,      Bragança;
+Região Centro: Lisboa,  Leiria, Santarém,         Castelo Branco, Coimbra, Aveiro, Viseu, Guarda;
+Região Sul:    Setúbal, Évora,  Portalegre,       Beja,           Faro.
 ** Clientes (humanos)
 - [ ] clientes fazem pedidos ao corretor
   - [ ] requestTransport
