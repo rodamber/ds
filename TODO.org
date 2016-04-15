@@ -1,0 +1,75 @@
+* SD 
+** Clientes (humanos)
+- [ ] clientes fazem pedidos ao corretor
+  - [ ] requestTransport
+    - [ ] funciona
+    - [ ] erros:
+      - [ ] origem ou destino desconhecido
+      - [ ] preco menor que 0
+      - [ ] se nao existir transporte disponivel para o destino
+      - [ ] se nao existir transporte com o preco pretendido
+  - [ ] viewTransport
+    - So e necessario contactar a transportadora se haver transporte para ser visto
+  - [ ] ping
+  - [ ] listTransports (devolve uma lista com o estado de todos os transportes)
+  - [ ] clearTransports (apaga todos os transportes e pede a`s transportadoras para também apagarem todos os seus dados. Esta operac ̧a ̃o permite “limpar” todo o estado do sistema)
+- [ ] clientes podem consultar estado do pedidos (podem listar as viagens registadas no corretor)
+** Corretor (UpaBroker)
+*** Estados:
+Ver transicoes de estado na pagina 4 do enunciado
+1. REQUESTED
+2. BUDGETED
+3. BOOKED
+4. FAILED
+5. HEADING
+6. ONGOING
+7. COMPLETED
+*** Funcionalidade
+- [ ] corretor pesquisa a empresa com preco mais baixo (localizados dinamicamente atraves do jUDDI)
+  - [ ] atribui viagem a transportadora e guarda registo da marcacao
+** Transportadora (UpaTransporter{1,2})
+*** Estados:
+1. PROPOSED
+2. ACCEPTED
+3. REJECTED
+4. HEADING
+5. ONGOING
+6. COMPLETED
+*** Funcionalidade
+- [ ] Transportadoras com numero impar operam nas regioes centro e sul
+- [ ] Transportadoras com numero par operam nas regioes centro e norte
+- [ ] transportadora recebe:
+  - [ ] pedidos de orcamento
+    - [ ] requestJob (ver enunciado)
+  - [ ] marcacao de viagem
+    - [ ] decideJob
+    - [ ] responde com confirmacao
+- [ ] mantem registo de todas as viagens que orcamentam e aprovam
+  - [ ] jobStatus
+- [ ] ping
+- [ ] listJobs
+- [ ] clearJobs
+- [ ] simulacao dos transportes
+** Testes
+Deverao ser testadas situacoes de:
+- [ ] falhas de comunicacao
+- [ ] falha silenciosa
+- [ ] falha do servidor UDDI
+*** Requisitos funcionais a cobrir
+- [ ] Requisito
+- [ ] Requisito
+- [ ] Requisito
+*** Unitarios (jMockit)
+Verificam o comportamento dos objectos atraves de invocacoes locais.
+Utilizar jMockit para simular os servidores remotos (UDDI e Web Services).
+**** Testes
+- [ ] Teste
+- [ ] Teste
+- [ ] Teste
+*** Integracao
+**** Testes
+- [ ] Teste
+- [ ] Teste
+- [ ] Teste
+*** UpaBroker
+*** UpaTransporter
