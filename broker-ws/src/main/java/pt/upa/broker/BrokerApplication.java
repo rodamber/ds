@@ -2,13 +2,13 @@ package pt.upa.broker;
 
 import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
-import pt.upa.transporter.ws.cli.*;
+// import pt.upa.transporter.ws.cli.*;
 import pt.upa.broker.ws.*;
 
 public class BrokerApplication {
 
-	public static void main(String[] args) throws Exception {
-		// Check arguments
+  public static void main(String[] args) throws Exception {
+    // Check arguments
         if (args.length == 0 || args.length == 2) {
             System.err.println("Argument(s) missing!");
             System.err.println("Usage: java " + BrokerApplication.class.getName() + " wsURL OR uddiURL wsName wsURL");
@@ -17,7 +17,7 @@ public class BrokerApplication {
         String uddiURL = null;
         String wsName = null;
         String wsURL = null;
-        
+
         //TransporterClient transporter1 = new TransporterClient();
 
         // Create server implementation object, according to options
@@ -39,6 +39,6 @@ public class BrokerApplication {
         } finally {
             endpoint.stop();
         }
-	}
+  }
 
 }
