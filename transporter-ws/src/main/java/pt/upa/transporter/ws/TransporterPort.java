@@ -89,6 +89,8 @@ public class TransporterPort implements TransporterPortType {
     }
 
     @Override
-    public void clearJobs() { /* RODRIGO:FIXME:TODO */ }
+    public void clearJobs() {
+    	/* RODRIGO:FIXME:TODO */ 
+    }
 
 }

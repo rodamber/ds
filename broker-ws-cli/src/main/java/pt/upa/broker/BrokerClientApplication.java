@@ -31,7 +31,10 @@ public class BrokerClientApplication {
             System.out.printf("Creating client using UDDI at %s for server with name %s%n", uddiURL, wsName);
             client = new BrokerClient(uddiURL, wsName);
         }
-
+        
+        System.out.println("Invoking ping(\"How you doin'\"");
+        String result = client.ping("How you doin'");
+        System.out.println(result);
         
         /* *********************************************
         
