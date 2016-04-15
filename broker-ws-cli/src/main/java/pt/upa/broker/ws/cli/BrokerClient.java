@@ -93,28 +93,6 @@ public class BrokerClient implements BrokerPortType {
             requestContext.put(ENDPOINT_ADDRESS_PROPERTY, wsURL);
         }
     }
-
-    /* *********************************************
-    
-    CALC EXAMPLE
-
-    public int sum(int a, int b) {
-        return port.sum(a, b);
-    }
-
-    public int sub(int a, int b) {
-        return port.sub(a, b);
-    }
-
-    public int mult(int a, int b) {
-        return port.mult(a, b);
-    }
-
-    public int intdiv(int a, int b) throws DivideByZero {
-        return port.intdiv(a, b);
-    }
-    
-    ********************************************* */
     
     /* BrokerPortType implementation */
 

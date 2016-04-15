@@ -35,8 +35,8 @@ public class BrokerClientApplication {
             client = new BrokerClient(uddiURL, wsName);
         }
         
-        System.out.println("Invoking ping(\"How you doin'\"");
-        String result = client.ping("How you doin'");
+        System.out.println("Invoking ping(\"Hello\")");
+        String result = client.ping("Hello");
         System.out.println(result);
 		
 		String tvID = client.requestTransport("Faro", "Beja", 51);
