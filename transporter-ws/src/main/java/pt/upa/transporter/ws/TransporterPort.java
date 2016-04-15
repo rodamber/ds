@@ -48,7 +48,7 @@ public class TransporterPort implements TransporterPortType {
     		throw new BadLocationFault_Exception(origin + " is not a valid city name", new BadLocationFault());
     	}
     	else if(!isCityNameValid(destination)){
-    		throw new BadLocationFault_Exception(origin + " is not a valid city name", new BadLocationFault());
+    		throw new BadLocationFault_Exception(destination + " is not a valid city name", new BadLocationFault());
     	}
     	else if(price < 0){
     		throw new BadPriceFault_Exception("Price must be greater than 0", new BadPriceFault());
