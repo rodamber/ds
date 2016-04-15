@@ -8,7 +8,6 @@ import javax.jws.WebService;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 
-import pt.upa.broker.ws.*;
 import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
 

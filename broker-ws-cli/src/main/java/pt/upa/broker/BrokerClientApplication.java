@@ -1,5 +1,8 @@
 package pt.upa.broker;
 
+import java.util.concurrent.TimeUnit;
+
+import pt.upa.broker.ws.TransportView;
 import pt.upa.broker.ws.cli.*;
 
 public class BrokerClientApplication {
@@ -35,19 +38,24 @@ public class BrokerClientApplication {
         System.out.println("Invoking ping(\"How you doin'\"");
         String result = client.ping("How you doin'");
         System.out.println(result);
-        
-        /* *********************************************
-        
-        CALC EXAMPLE
-        
-        the following remote invocations are just basic examples
-        the actual tests are made using JUnit
-
-        System.out.print("Invoke sum(1,2)... ");
-        int result = client.sum(1, 2);
-        System.out.println(result);
-        
-        ********************************************** */
+		
+		String tvID = client.requestTransport("Faro", "Beja", 51);
+		
+		TransportView tv = client.viewTransport(tvID);
+		
+		System.out.println(tvID);
+		
+		System.out.println(String.valueOf(tv.getPrice()));
+		
+		System.out.println(tv.getState().name());
+		
+		System.out.println(client.viewTransport(tvID).getState());
+		
+		TimeUnit.SECONDS.sleep(5);
+		System.out.println(client.viewTransport(tvID).getState());
+		
+		TimeUnit.SECONDS.sleep(5);
+		System.out.println(client.viewTransport(tvID).getState());
 	}
 
 }

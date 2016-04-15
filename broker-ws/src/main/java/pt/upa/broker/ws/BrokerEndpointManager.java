@@ -5,6 +5,7 @@ import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 
 import pt.upa.broker.ws.BrokerPort;
+import pt.upa.transporter.ws.cli.*;
 
 /** Endpoint manager */
 public class BrokerEndpointManager {

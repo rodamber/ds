@@ -17,6 +17,7 @@ public class BrokerApplication {
         String uddiURL = null;
         String wsName = null;
         String wsURL = null;
+		
         // Create server implementation object, according to options
         BrokerEndpointManager endpoint = null;
         if (args.length == 1) {
@@ -31,9 +32,6 @@ public class BrokerApplication {
         }
 
         try {
-            TransporterClient transporter1 = new TransporterClient(uddiURL, "UpaTransporter1");
-            System.out.println(transporter1.ping("oioi"));
-
             endpoint.start();
             endpoint.awaitConnections();
         } finally {
