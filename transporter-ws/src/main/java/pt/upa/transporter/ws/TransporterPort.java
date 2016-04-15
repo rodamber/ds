@@ -5,6 +5,9 @@ import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.jws.WebService;
+import java.util.Timer;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.TimerTask;
 
 @WebService(
     name              = "TransporterWebService",
@@ -19,6 +22,8 @@ public class TransporterPort implements TransporterPortType {
 
     private TransporterEndpointManager endpoint;
     private List<JobView> registry = new ArrayList<JobView>();
+    private int lastJobID = 0;
+    private Timer t = new Timer();
     
     public TransporterPort(TransporterEndpointManager endpoint) {
         this.endpoint = endpoint;
@@ -37,7 +42,7 @@ public class TransporterPort implements TransporterPortType {
     public JobView requestJob(String origin, String destination, int price)
         throws BadLocationFault_Exception, BadPriceFault_Exception {
     	
-    	int transporterID = getTransporterID(endpoint.getWsName());
+       	int transporterID = getTransporterID(endpoint.getWsName());
     	    	
     	if(!isCityNameValid(origin)){
     		throw new BadLocationFault_Exception(origin + " is not a valid city name", new BadLocationFault());
@@ -55,72 +60,61 @@ public class TransporterPort implements TransporterPortType {
     	else if(price > 100){
     		return null;
     	}
-    	else if(price > 10){
-    		if(price % 2 == transporterID % 2){
-    			//TODO FAZ OFERTA ABAIXO DO PREÇO
-    		}
-    		else{
-    			//TODO FAZ OFERTA ACIMA DO PREÇO
-    		}
-    	}
     	
-    	//TODO RESTO
+       	int newPrice;
     	
-        return null;
+		if(price <= 10 || price % 2 == transporterID % 2){
+			//TODO FAZ OFERTA ABAIXO DO PREÇO
+			newPrice = price - random(1,price);
+		}
+		else{
+			//TODO FAZ OFERTA ACIMA DO PREÇO
+			newPrice = price + random(1,(100-price));
+		}
+    	
+		String jobID = generateJobID(transporterID, lastJobID++);
+		
+		JobView job = JobView(endpoint.getWsName(), jobID, origin, destination, newPrice);
+		
+		job.setJobState(JobStateView.PROPOSED);
+		addToRegistry(job);
+    	
+        return job;
     }
 
     @Override
     public JobView decideJob(String id, boolean accept)
         throws BadJobFault_Exception {
-        /* RODRIGO:FIXME:TODO */
-        return null;
+        
+    	JobView job = searchRegistry(id);
+    	
+    	if(job != null && accept){
+    		job.setJobState(JobStateView.ACCEPTED);
+			t.schedule(new ChangeOfState(job, t), ThreadLocalRandom.current().nextInt(1000,5000));
+    	}
+    	else{
+    		job.setJobState(JobStateView.REJECTED);
+    	}
+    	
+    	return job;
     }
 
     @Override
     public JobView jobStatus(String id) {
-        /* RODRIGO:FIXME:TODO */
-        return null;
+        return searchRegistry(id);
     }
-
 
     @Override
     public List<JobView> listJobs() {
-        /* RODRIGO:FIXME:TODO */
-        return null;
+        return registry;
     }
 
     @Override
     public void clearJobs() {
-    	/* RODRIGO:FIXME:TODO */ 
+    	registry.clear();
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+    /* ** ------------------------------------------------------------- ** */
 
     private List<String> northRegion = Arrays.asList("Porto", "Braga", "Viana do Castelo", "Vila Real", "Bragança");
     private List<String> centerRegion = Arrays.asList("Lisboa", "Leiria", "Santarém", "Castelo Branco", "Coimbra", "Aveiro", "Viseu", "Guarda");
@@ -138,12 +132,70 @@ public class TransporterPort implements TransporterPortType {
         return transporterWsName.charAt(transporterWsName.length()-1);
     }
     
-    private int random(int min, int max){
+    private static int random(int min, int max){
     	return (new Random()).nextInt((max - min) + 1) + min;
     }
     
-    private String generateID(int transporterID, int jobID){
+    private String generateJobID(int transporterID, int jobID){
     	return "UpaTransporter" + Integer.toString(transporterID) + "-" + Integer.toString(jobID);
     }
-
+    
+    private JobView JobView(String companyName, String jobID, String origin, String destination, int price){
+    	JobView job = new JobView();
+		job.setCompanyName(companyName);
+		job.setJobIdentifier(jobID);
+		job.setJobOrigin(origin);
+		job.setJobDestination(destination);
+		job.setJobPrice(price);
+		return job;
+    }
+    
+    private void addToRegistry(JobView j){
+    	registry.add(j);
+    }
+    
+    private JobView searchRegistry(String jobID){
+    	for(JobView j : registry){
+    		if(j.getJobIdentifier().equals(jobID)){
+    			return j;
+    		}
+    	}
+    	return null;
+    }
+    
+    class ChangeOfState extends TimerTask{
+		private JobView j;
+		private Timer t;
+  
+		public ChangeOfState(JobView job, Timer timer){
+			j = job;
+			t = timer;
+		}
+  
+		@Override
+		public void run(){
+			switch(j.getJobState()){
+			case ACCEPTED:
+				j.setJobState(JobStateView.HEADING);
+				t.schedule(new ChangeOfState(j, t), ThreadLocalRandom.current().nextInt(1000, 5000));
+				System.out.println(this);
+				this.cancel();
+				break;
+			case HEADING:
+				j.setJobState(JobStateView.ONGOING);
+				t.schedule(new ChangeOfState(j, t), ThreadLocalRandom.current().nextInt(1000, 5000));
+				System.out.println(this);
+				this.cancel();
+				break;
+			case ONGOING:
+				j.setJobState(JobStateView.COMPLETED);
+				t.schedule(new ChangeOfState(j, t), ThreadLocalRandom.current().nextInt(1000, 5000));
+				this.cancel();
+				break;
+			default:
+				t.purge();
+				break;
+			}
+		}
+	}
 }

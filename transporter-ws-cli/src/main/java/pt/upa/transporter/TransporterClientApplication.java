@@ -1,6 +1,9 @@
 package pt.upa.transporter;
 
 import pt.upa.transporter.ws.cli.*;
+import java.util.concurrent.TimeUnit;
+import pt.upa.transporter.ws.*;
+
 
 public class TransporterClientApplication {
 
@@ -31,22 +34,39 @@ public class TransporterClientApplication {
             System.out.printf("Creating client using UDDI at %s for server with name %s%n", uddiURL, wsName);
             client = new TransporterClient(uddiURL, wsName);
         }
-        
-        System.out.println("Invoking ping(\"Who cares?\")");
-        String result = client.ping("Who cares?");
-        System.out.println(result);
-        
-        /* *********************************************
-        
-        CALC EXAMPLE
-        
-        the following remote invocations are just basic examples
-        the actual tests are made using JUnit
 
-        System.out.print("Invoke sum(1,2)... ");
-        int result = client.sum(1, 2);
-        System.out.println(result);
-        
-        ********************************************** */
+		System.out.println("Invoking ping(\"Sistemas Distribuídos são fantásticos\")");
+		String result = client.ping("Sistemas Distribuídos são fantásticos");
+		System.out.println(result);
+		
+		//System.out.println(randInt(1,5));
+		JobView jb = client.requestJob("Setúbal", "Évora", 50);
+		JobView jb1 = client.requestJob("Évora", "Setúbal", 29);
+		
+		String jbID = jb.getJobIdentifier();
+		String jbID1 = jb1.getJobIdentifier();
+		
+		System.out.println(jbID);
+		System.out.println(jbID1);
+		
+		System.out.println(String.valueOf(jb.getJobPrice()));
+		System.out.println(String.valueOf(jb1.getJobPrice()));
+		
+		System.out.println(jb.getJobState().name());
+		System.out.println(jb1.getJobState().name());
+		
+		jb = client.decideJob(jbID, true);
+		jb1 = client.decideJob(jbID1, true);
+
+		System.out.println(client.jobStatus(jbID).getJobState());
+		System.out.println(client.jobStatus(jbID1).getJobState());
+		
+		TimeUnit.SECONDS.sleep(5);
+		System.out.println(client.jobStatus(jbID).getJobState());
+		System.out.println(client.jobStatus(jbID1).getJobState());
+		
+		TimeUnit.SECONDS.sleep(5);
+		System.out.println(client.jobStatus(jbID).getJobState());
+		System.out.println(client.jobStatus(jbID1).getJobState());
     }
 }
