@@ -28,8 +28,9 @@ Ver transicoes de estado na pagina 4 do enunciado
 6. ONGOING
 7. COMPLETED
 *** Funcionalidade
-- [ ] corretor pesquisa a empresa com preco mais baixo (localizados dinamicamente atraves do jUDDI)
-  - [ ] atribui viagem a transportadora e guarda registo da marcacao
+- [-] corretor pesquisa a empresa com preco mais baixo (localizados dinamicamente atraves do jUDDI)
+  - [ ] funcao
+  - [X] atribui viagem a transportadora e guarda registo da marcacao
 ** Transportadora (UpaTransporter{1,2})
 *** Estados:
 1. PROPOSED

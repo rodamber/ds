@@ -6,8 +6,6 @@ import java.util.Arrays;
 
 import javax.jws.WebService;
 
-import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
-
 import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
 
@@ -22,10 +20,6 @@ import pt.upa.transporter.ws.cli.*;
 public class BrokerPort implements BrokerPortType {
 
     private BrokerEndpointManager endpoint;
-
-    private static List<String> northRegion  = new ArrayList<>(Arrays.asList("Porto", "Braga", "Viana do Castelo", "Vila Real", "Bragança"));
-    private static List<String> centerRegion = new ArrayList<>(Arrays.asList("Lisboa", "Leiria", "Santarém", "Castelo Branco", "Coimbra", "Aveiro", "Viseu", "Guarda"));
-    private static List<String> southRegion  = new ArrayList<>(Arrays.asList("Setúbal", "Évora", "Portalegre", "Beja", "Faro"));
 
     // RODRIGO:FIXME
     private List<TransportView> views = new ArrayList<>();
@@ -63,10 +57,6 @@ public class BrokerPort implements BrokerPortType {
         }
 
         return "Ping:\n" + msg;
-    }
-
-    public boolean knownLocation(String location) {
-        return northRegion.contains(location) || centerRegion.contains(location) || southRegion.contains(location);
     }
 
     private JobView findBestOffer(String origin, String destination, int price, List<JobView> allOffers)
@@ -160,8 +150,37 @@ public class BrokerPort implements BrokerPortType {
 
     @Override
     public TransportView viewTransport(String id) throws UnknownTransportFault_Exception {
-        /* RODRIGO:FIXME:TODO */
-        return null;
+        TransportView view;
+
+        for (TransportView v : views) {
+            if (v.getId().equals(id)) {
+                view = v;
+            }
+        }
+
+        if (view == null) {
+            UnknownTransportFault fault = new UnknownTransportFault();
+            fault.setId(id);
+            throw new UnknownTransportFault_Exception("Unknown transport", fault);
+        }
+
+        if (view.getState().equals(TransportStateView."COMPLETED")) {
+            return view;
+        }
+
+        try {
+            TransporterClient client - new TransporterClient(endpoint.getUddiURL(), view.getTransporterCompany());
+            JobStateView jobState = client.jobStatus(id).getJobState();
+
+            if (jobState.equals(JobStateView."HEADING"))
+                view.setState(transport.getState().HEADING);
+            else if (jobState.equals(JobStateView."ONGOING"))
+                view.setState(view.getState().ONGOING);
+
+            return view;
+        } catch (TransporterClientException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
