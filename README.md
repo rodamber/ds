@@ -14,53 +14,38 @@ Repositório:
 
 -------------------------------------------------------------------------------
 
-## Instruções de instalação 
+## Instruções de instalação
 
 
 ### Ambiente
 
 [0] Iniciar sistema operativo
 
-Indicar Windows ou Linux
-*(escolher um dos dois, que esteja disponível nos laboratórios, e depois apagar esta linha)*
-
+Linux
 
 [1] Iniciar servidores de apoio
 
 JUDDI:
 ```
-...
+Obter o JUDDI [aqui](http://disciplinas.tecnico.ulisboa.pt/leic-sod/2015-2016/download/juddi-3.3.2_tomcat-7.0.64_9090.zip)
+unzip juddi-3.3.2_tomcat-7.0.64_9090.zip
+chmod +x juddi-3.3.2_tomcat-7.0.64_9090/bin/*.sh
+./juddi-3.3.2_tomcat-7.0.64_9090/bin/startup.sh &
 ```
 
-
-[2] Criar pasta temporária
-
-```
-cd ...
-mkdir ...
-```
-
-
-[3] Obter código fonte do projeto (versão entregue)
+[2] Obter código fonte do projeto (versão entregue)
 
 ```
-git clone ... 
+git clone https://github.com/tecnico-distsys/A_02-project.git --branch v1.0 --single-branch
 ```
 *(colocar aqui comandos git para obter a versão entregue a partir da tag e depois apagar esta linha)*
 
 
-[4] Instalar módulos de bibliotecas auxiliares
+[3] Instalar módulos de bibliotecas auxiliares
 
 ```
-cd uddi-naming
-mvn clean install
+mvn -f uddi-naming/pom.xml clean install
 ```
-
-```
-cd ...
-mvn clean install
-```
-
 
 -------------------------------------------------------------------------------
 
@@ -69,16 +54,13 @@ mvn clean install
 [1] Construir e executar **servidor**
 
 ```
-cd ...-ws
-mvn clean install
-mvn exec:java
+mvn -f transporter-ws/pom.xml clean install exec:java &
 ```
 
 [2] Construir **cliente** e executar testes
 
 ```
-cd ...-ws-cli
-mvn clean install
+mvn -f transporter-ws-cli/pom.xml clean install
 ```
 
 ...
@@ -91,17 +73,14 @@ mvn clean install
 [1] Construir e executar **servidor**
 
 ```
-cd ...-ws
-mvn clean install
-mvn exec:java
+mvn -f broker-ws/pom.xml clean install exec:java &
 ```
 
 
 [2] Construir **cliente** e executar testes
 
 ```
-cd ...-ws-cli
-mvn clean install
+mvn -f broker-ws-cli/pom.xml clean install
 ```
 
 ...
