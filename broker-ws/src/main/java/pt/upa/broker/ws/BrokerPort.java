@@ -150,37 +150,40 @@ public class BrokerPort implements BrokerPortType {
 
     @Override
     public TransportView viewTransport(String id) throws UnknownTransportFault_Exception {
-        TransportView view;
+        /* RODRIGO:FIXME:TODO */
+        return null;
 
-        for (TransportView v : views) {
-            if (v.getId().equals(id)) {
-                view = v;
-            }
-        }
+        // TransportView view;
 
-        if (view == null) {
-            UnknownTransportFault fault = new UnknownTransportFault();
-            fault.setId(id);
-            throw new UnknownTransportFault_Exception("Unknown transport", fault);
-        }
+        // for (TransportView v : views) {
+        //     if (v.getId().equals(id)) {
+        //         view = v;
+        //     }
+        // }
 
-        if (view.getState().equals(TransportStateView."COMPLETED")) {
-            return view;
-        }
+        // if (view == null) {
+        //     UnknownTransportFault fault = new UnknownTransportFault();
+        //     fault.setId(id);
+        //     throw new UnknownTransportFault_Exception("Unknown transport", fault);
+        // }
 
-        try {
-            TransporterClient client - new TransporterClient(endpoint.getUddiURL(), view.getTransporterCompany());
-            JobStateView jobState = client.jobStatus(id).getJobState();
+        // if (view.getState().equals(TransportStateView."COMPLETED")) {
+        //     return view;
+        // }
 
-            if (jobState.equals(JobStateView."HEADING"))
-                view.setState(transport.getState().HEADING);
-            else if (jobState.equals(JobStateView."ONGOING"))
-                view.setState(view.getState().ONGOING);
+        // try {
+        //     TransporterClient client - new TransporterClient(endpoint.getUddiURL(), view.getTransporterCompany());
+        //     JobStateView jobState = client.jobStatus(id).getJobState();
 
-            return view;
-        } catch (TransporterClientException e) {
-            e.printStackTrace();
-        }
+        //     if (jobState.equals(JobStateView."HEADING"))
+        //         view.setState(transport.getState().HEADING);
+        //     else if (jobState.equals(JobStateView."ONGOING"))
+        //         view.setState(view.getState().ONGOING);
+
+        //     return view;
+        // } catch (TransporterClientException e) {
+        //     e.printStackTrace();
+        // }
     }
 
     @Override
