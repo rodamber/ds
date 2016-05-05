@@ -27,458 +27,488 @@ import javax.xml.registry.infomodel.ServiceBinding;
 /**
  * This class defines simple methods to bind UDDI organizations to URL
  * addresses: list, lookup, unbind, bind, rebind. It is inspired by the
- * java.rmi.Naming class.
- *
+ * java.rmi.Naming class.<br />
+ * <br />
  * To achieve greater control of the underlying registry, the JAX-R API should
- * be used instead.
+ * be used instead.<br />
+ * <br />
+ *
+ * @author Miguel Pardal
  */
 public class UDDINaming {
 
-    /** JAX-R query object */
-    private BusinessQueryManager bqm;
-    /** JAX-R update object */
-    private BusinessLifeCycleManager blcm;
+	/** JAX-R query object */
+	private BusinessQueryManager bqm;
+	/** JAX-R update object */
+	private BusinessLifeCycleManager blcm;
 
-    /** JAX-R connection factory */
-    private ConnectionFactory connFactory;
-    /** JAX-R connection */
-    private Connection conn;
+	/** JAX-R connection factory */
+	private ConnectionFactory connFactory;
+	/** JAX-R connection */
+	private Connection conn;
 
-    /** UDDI URL */
-    private String url;
-    
-    /** UDDI user name */
-    private String username = "username";
-    /** UDDI user password */
-    private char[] password = "password".toCharArray();
+	/** UDDI URL */
+	private String url;
 
-    /**
-     * option to establish connection automatically - Should the lookup method
-     * connect automatically? true - yes, false - no
-     */
-    private boolean autoConnectFlag;
+	/** UDDI user name */
+	private String username = "username";
+	/** UDDI user password */
+	private char[] password = "password".toCharArray();
 
-    /** option to print JNDI and JAX-R debug messages */
-    private boolean debugFlag = false;
+	/**
+	 * option to establish connection automatically - Should the lookup method
+	 * connect automatically? true - yes, false - no
+	 */
+	private boolean autoConnectFlag;
 
-    //
-    // Constructors
-    //
+	/** option to print JNDI and JAX-R debug messages */
+	private boolean debugFlag = false;
 
-    /** Create an UDDI client configured to access the specified URL */
-    public UDDINaming(String url) throws JAXRException {
-        this(url, true);
-    }
+	/** option to print JNDI and JAX-R trace messages */
+	private boolean traceFlag = false;
 
-    /**
-     * Create an UDDI client configured to access the specified URL and with the
-     * specified auto-connect option
-     */
-    public UDDINaming(String url, boolean autoConnect) throws JAXRException {
-        if (!url.startsWith("http"))
-            throw new IllegalArgumentException(
-                    "Please provide UDDI server URL in http://host:port format!");
-        this.autoConnectFlag = autoConnect;
+	//
+	// Constructors
+	//
 
-        try {
-            InitialContext context = new InitialContext();
-            connFactory = (ConnectionFactory) context
-                    .lookup("java:jboss/jaxr/ConnectionFactory");
-        } catch (NamingException e) {
-            // Could not find using JNDI
-            if (debugFlag) {
-                System.out.println("Caught " + e);
-                e.printStackTrace(System.out);
-            }
+	/**
+	 * Create an UDDI client configured to access the specified URL.
+	 * The connection to the server is managed automatically (auto-connect option is enabled).
+	 */
+	public UDDINaming(String uddiURL) throws JAXRException {
+		this(uddiURL, true);
+	}
 
-            // try factory method from scout
-            System.setProperty("javax.xml.registry.ConnectionFactoryClass",
-                    "org.apache.ws.scout.registry.ConnectionFactoryImpl");
-            connFactory = ConnectionFactory.newInstance();
-        }
+	/**
+	 * Create an UDDI client configured to access the specified URL and with the
+	 * specified auto-connect option.
+	 */
+	public UDDINaming(String uddiURL, boolean autoConnect) throws JAXRException {
+		if (!uddiURL.startsWith("http"))
+			throw new IllegalArgumentException("Please provide UDDI server URL in http://host:port format!");
+		this.autoConnectFlag = autoConnect;
 
-        // define system properties used to perform replacements in uddi.xml
-        if (System.getProperty("javax.xml.registry.queryManagerURL") == null)
-            System.setProperty("javax.xml.registry.queryManagerURL", url
-                    + "/juddiv3/services/inquiry");
+		try {
+			InitialContext context = new InitialContext();
+			connFactory = (ConnectionFactory) context.lookup("java:jboss/jaxr/ConnectionFactory");
+		} catch (NamingException e) {
+			// Could not find using JNDI
+			if (debugFlag) {
+				System.out.println("Caught " + e);
+				if (traceFlag)
+					e.printStackTrace(System.out);
+			}
 
-        if (System.getProperty("javax.xml.registry.lifeCycleManagerURL") == null)
-            System.setProperty("javax.xml.registry.lifeCycleManagerURL", url
-                    + "/juddiv3/services/publish");
+			// try factory method from scout
+			System.setProperty("javax.xml.registry.ConnectionFactoryClass",
+					"org.apache.ws.scout.registry.ConnectionFactoryImpl");
+			connFactory = ConnectionFactory.newInstance();
+		}
 
-        if (System.getProperty("javax.xml.registry.securityManagerURL") == null)
-            System.setProperty("javax.xml.registry.securityManagerURL", url
-                    + "/juddiv3/services/security");
+		// define system properties used to perform replacements in uddi.xml
+		if (System.getProperty("javax.xml.registry.queryManagerURL") == null)
+			System.setProperty("javax.xml.registry.queryManagerURL", uddiURL + "/juddiv3/services/inquiry");
 
-        Properties props = new Properties();
-        props.setProperty("scout.juddi.client.config.file", "uddi.xml");
-        props.setProperty("javax.xml.registry.queryManagerURL",
-                System.getProperty("javax.xml.registry.queryManagerURL"));
-        props.setProperty("scout.proxy.uddiVersion", "3.0");
-        props.setProperty("scout.proxy.transportClass",
-                "org.apache.juddi.v3.client.transport.JAXWSTransport");
-        connFactory.setProperties(props);
+		if (System.getProperty("javax.xml.registry.lifeCycleManagerURL") == null)
+			System.setProperty("javax.xml.registry.lifeCycleManagerURL", uddiURL + "/juddiv3/services/publish");
 
-        // save URL
-        this.url = url;
-    }
+		if (System.getProperty("javax.xml.registry.securityManagerURL") == null)
+			System.setProperty("javax.xml.registry.securityManagerURL", uddiURL + "/juddiv3/services/security");
 
-    //
-    // Accessors
-    //
+		Properties props = new Properties();
+		props.setProperty("scout.juddi.client.config.file", "uddi.xml");
+		props.setProperty("javax.xml.registry.queryManagerURL",
+				System.getProperty("javax.xml.registry.queryManagerURL"));
+		props.setProperty("scout.proxy.uddiVersion", "3.0");
+		props.setProperty("scout.proxy.transportClass", "org.apache.juddi.v3.client.transport.JAXWSTransport");
+		connFactory.setProperties(props);
 
-    /** Return UDDI server address */
+		// save URL
+		this.url = uddiURL;
+	}
+
+	//
+	// Accessors
+	//
+
+	/** Return UDDI server address */
 	public String getUDDIUrl() {
 		return url;
 	}
-    
-	/** Return username */
-    public String getUsername() {
-        return username;
-    }
 
-    /** Set username */
-    public void setUsername(String username) {
-        this.username = username;
-    }
+	/** Return user name */
+	public String getUsername() {
+		return username;
+	}
 
-    /** Set password */
-    public void setPassword(char[] password) {
-        this.password = password;
-    }
+	/** Set user name */
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
-    /** get print debug option value */
-    public boolean isPrintDebug() {
-        return debugFlag;
-    }
+	/** Set password */
+	public void setPassword(char[] password) {
+		this.password = password;
+	}
 
-    /** print information messages? */
-    public void setPrintDebug(boolean infoFlag) {
-        this.debugFlag = infoFlag;
-    }
+	/** get print debug messages option value */
+	public boolean isPrintDebug() {
+		return debugFlag;
+	}
 
-    /**
-     * Main method expects two arguments: - UDDI server URL - Organization name
-     *
-     * Main performs a lookup on UDDI server using the organization name. If a
-     * registration is found, the service URL is printed to standard output. If
-     * not, nothing is printed.
-     *
-     * Standard error is used to print error messages.
-     */
-    public static void main(String[] args) {
-        // Check arguments
-        if (args.length < 2) {
-            System.err.println("Argument(s) missing!");
-            System.err.printf("Usage: java %s uddiURL orgName%n",
-                    UDDINaming.class.getName());
-            return;
-        }
+	/** print debug messages? */
+	public void setPrintDebug(boolean debugFlag) {
+		this.debugFlag = debugFlag;
+	}
 
-        String uddiURL = args[0];
-        String orgName = args[1];
 
-        UDDINaming instance;
-        try {
-            instance = new UDDINaming(uddiURL);
-            String url = instance.lookup(orgName);
+	/**
+	 * Main method expects two arguments: - UDDI server URL - Organization name<br />
+	 * <br />
+	 * Main performs a lookup on UDDI server using the organization name. <br />
+	 * If a registration is found, the service URL is printed to standard output.<br />
+	 * If not, nothing is printed.<br />
+	 * <br />
+	 * Standard error is used to print error messages.<br />
+	 */
+	public static void main(String[] args) {
+		// Check arguments
+		if (args.length < 2) {
+			System.err.println("Argument(s) missing!");
+			System.err.printf("Usage: java %s uddiURL orgName%n", UDDINaming.class.getName());
+			return;
+		}
 
-            if (url != null)
-                System.out.println(url);
+		String uddiURL = args[0];
+		String orgName = args[1];
 
-        } catch (JAXRException e) {
-            System.err.println("Caught JAX-R exception!");
-            e.printStackTrace(System.err);
-        }
-    }
+		UDDINaming instance;
+		try {
+			instance = new UDDINaming(uddiURL);
+			String url = instance.lookup(orgName);
 
-    //
-    // Connection management
-    //
+			if (url != null)
+				System.out.println(url);
 
-    /** Connect to UDDI server */
-    public void connect() throws JAXRException {
+		} catch (JAXRException e) {
+			System.err.print("Caught JAX-R exception! ");
+			System.err.println(e);
+		}
+	}
 
-        conn = connFactory.createConnection();
+	//
+	// Connection management
+	//
 
-        // Define credentials
-        PasswordAuthentication passwdAuth = new PasswordAuthentication(
-                username, password);
-        Set<PasswordAuthentication> creds = new HashSet<PasswordAuthentication>();
-        creds.add(passwdAuth);
-        conn.setCredentials(creds);
+	/** Connect to UDDI server */
+	public void connect() throws JAXRException {
 
-        // Get RegistryService object
-        RegistryService rs = conn.getRegistryService();
+		conn = connFactory.createConnection();
 
-        // Get QueryManager object (for inquiries)
-        bqm = rs.getBusinessQueryManager();
+		// Define credentials
+		PasswordAuthentication passwdAuth = new PasswordAuthentication(username, password);
+		Set<PasswordAuthentication> creds = new HashSet<PasswordAuthentication>();
+		creds.add(passwdAuth);
+		conn.setCredentials(creds);
 
-        // get BusinessLifeCycleManager object (for updates)
-        blcm = rs.getBusinessLifeCycleManager();
-    }
+		// Get RegistryService object
+		RegistryService rs = conn.getRegistryService();
 
-    /** Disconnect from UDDI server */
-    public void disconnect() throws JAXRException {
-        try {
-            if (conn != null)
-                conn.close();
-        } finally {
-            conn = null;
-            bqm = null;
-            blcm = null;
-        }
-    }
+		// Get QueryManager object (for inquiries)
+		bqm = rs.getBusinessQueryManager();
 
-    /** Disconnect from UDDI server, ignoring JAX-R exceptions */
-    public void disconnectQuietly() {
-        try {
-            disconnect();
+		// get BusinessLifeCycleManager object (for updates)
+		blcm = rs.getBusinessLifeCycleManager();
+	}
 
-        } catch (JAXRException e) {
-            // ignore
-        }
-    }
+	/** Disconnect from UDDI server */
+	public void disconnect() throws JAXRException {
+		try {
+			if (conn != null)
+				conn.close();
+		} finally {
+			conn = null;
+			bqm = null;
+			blcm = null;
+		}
+	}
 
-    /** helper method to automatically connect to registry */
-    private void autoConnect() throws JAXRException {
-        if (conn == null)
-            if (autoConnectFlag)
-                connect();
-            else
-                throw new IllegalStateException(
-                        "Not connected! Cannot perform operation!");
-    }
+	/** Disconnect from UDDI server, ignoring JAX-R exceptions */
+	public void disconnectQuietly() {
+		try {
+			disconnect();
 
-    /** helper method to automatically disconnect from registry */
-    private void autoDisconnect() throws JAXRException {
-        if (autoConnectFlag)
-            disconnectQuietly();
-    }
+		} catch (JAXRException e) {
+			// ignore
+		}
+	}
 
-    //
-    // UDDINaming interface
-    // Outer methods manage connection and call internal operations
-    //
+	/** helper method to automatically connect to registry */
+	private void autoConnect() throws JAXRException {
+		if (conn == null)
+			if (autoConnectFlag)
+				connect();
+			else
+				throw new IllegalStateException("Not connected! Cannot perform operation!");
+	}
 
-    /** Returns a collection of URL bound to the name */
-    public Collection<String> list(String orgName) throws JAXRException {
-        autoConnect();
-        try {
-            return queryAll(orgName);
-        } finally {
-            autoDisconnect();
-        }
-    }
+	/** helper method to automatically disconnect from registry */
+	private void autoDisconnect() throws JAXRException {
+		if (autoConnectFlag)
+			disconnectQuietly();
+	}
 
-    /** Returns the first URL associated with the specified name */
-    public String lookup(String orgName) throws JAXRException {
-        autoConnect();
-        try {
-            return query(orgName);
-        } finally {
-            autoDisconnect();
-        }
-    }
+	//
+	// UDDINaming interface
+	// Outer methods manage connection and call internal operations
+	//
 
-    /** Destroys the binding for the specified name */
-    public void unbind(String orgName) throws JAXRException {
-        autoConnect();
-        try {
-            deleteAll(orgName);
+	/** Returns a collection of records bound to the name.
+	 * The provided name can include wild-card characters - % or ? - to match multiple records.  */
+	public Collection<UDDIRecord> listRecords(String orgName) throws JAXRException {
+		autoConnect();
+		try {
+			return queryAll(orgName);
+		} finally {
+			autoDisconnect();
+		}
+	}
 
-        } finally {
-            autoDisconnect();
-        }
-    }
+	/** Returns a collection of URLs bound to the name.
+	 * The provided name can include wild-card characters - % or ? - to match multiple records.  */
+	public Collection<String> list(String orgName) throws JAXRException {
+		Collection<UDDIRecord> records = listRecords(orgName);
+		List<String> urls = new ArrayList<>();
+		for (UDDIRecord record : records)
+			urls.add(record.getUrl());
+		return urls;
+	}
 
-    /** Binds the specified name to a URL */
-    public void bind(String orgName, String url) throws JAXRException {
-        autoConnect();
-        try {
-            publish(orgName, url);
+	/** Returns the first record associated with the specified name */
+	public UDDIRecord lookupRecord(String orgName) throws JAXRException {
+		autoConnect();
+		try {
+			return query(orgName);
+		} finally {
+			autoDisconnect();
+		}
+	}
 
-        } finally {
-            autoDisconnect();
-        }
-    }
+	/** Returns the first URL associated with the specified name */
+	public String lookup(String orgName) throws JAXRException {
+		try {
+			UDDIRecord record = lookupRecord(orgName);
+			return record.getUrl();
+		} catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
+	}
 
-    /** Rebinds the specified name to a new URL */
-    public void rebind(String orgName, String url) throws JAXRException {
-        autoConnect();
-        try {
-            deleteAll(orgName);
-            publish(orgName, url);
+	/** Destroys the binding for the specified name */
+	public void unbind(String orgName) throws JAXRException {
+		autoConnect();
+		try {
+			deleteAll(orgName);
 
-        } finally {
-            autoDisconnect();
-        }
-    }
+		} finally {
+			autoDisconnect();
+		}
+	}
 
-    //
-    // private implementation
-    //
+	/** Binds the specified name to a URL */
+	public void bind(String orgName, String url) throws JAXRException {
+		UDDIRecord record = new UDDIRecord(orgName, url);
+		bind(record);
+	}
 
-    private Collection<String> queryAll(String orgName) throws JAXRException {
-        List<String> result = new ArrayList<String>();
+	/** Binds the specified record containing a name and a URL */
+	public void bind(UDDIRecord record) throws JAXRException {
+		autoConnect();
+		try {
+			publish(record);
 
-        // search by name
-        Collection<String> findQualifiers = new ArrayList<String>();
-        findQualifiers.add(FindQualifier.SORT_BY_NAME_DESC);
+		} finally {
+			autoDisconnect();
+		}
+	}
 
-        // query organizations
-        Collection<String> namePatterns = new ArrayList<String>();
-        namePatterns.add(orgName);
+	/** Rebinds the specified name to a new URL */
+	public void rebind(String orgName, String url) throws JAXRException {
+		UDDIRecord record = new UDDIRecord(orgName, url);
+		rebind(record);
+	}
 
-        // perform search
-        BulkResponse r = bqm.findOrganizations(findQualifiers, namePatterns,
-                null, null, null, null);
-        @SuppressWarnings("unchecked")
-        Collection<Organization> orgs = r.getCollection();
-        if (debugFlag)
-            System.out.printf("Found %d organizations%n", orgs.size());
+	/** Rebinds the specified record containing a name and a new URL */
+	public void rebind(UDDIRecord record) throws JAXRException {
+		autoConnect();
+		try {
+			deleteAll(record.getOrgName());
+			publish(record);
 
-        for (Organization o : orgs) {
-            @SuppressWarnings("unchecked")
-            Collection<Service> services = o.getServices();
-            if (debugFlag)
-                System.out.printf("Found %d services%n", services.size());
+		} finally {
+			autoDisconnect();
+		}
+	}
 
-            for (Service s : services) {
-                @SuppressWarnings("unchecked")
-                Collection<ServiceBinding> serviceBindinds = (Collection<ServiceBinding>) s
-                        .getServiceBindings();
-                if (debugFlag)
-                    System.out.printf("Found %d service bindings%n",
-                            serviceBindinds.size());
+	//
+	// private implementation
+	//
 
-                for (ServiceBinding sb : serviceBindinds) {
-                    result.add(sb.getAccessURI());
-                }
-            }
-        }
+	private List<UDDIRecord> queryAll(String orgName) throws JAXRException {
+		List<UDDIRecord> records = new ArrayList<UDDIRecord>();
 
-        // service binding not found
-        if (debugFlag)
-            System.out.printf("Returning list with size %d%n", result.size());
-        return result;
-    }
+		// search by name
+		Collection<String> findQualifiers = new ArrayList<String>();
+		findQualifiers.add(FindQualifier.SORT_BY_NAME_DESC);
 
-    private String query(String orgName) throws JAXRException {
-        Collection<String> listResult = queryAll(orgName);
-        int listResultSize = listResult.size();
+		// query organizations
+		Collection<String> namePatterns = new ArrayList<String>();
+		namePatterns.add(orgName);
 
-        if (listResultSize == 0) {
-            // service binding not found
-            if (debugFlag)
-                System.out.println("Service binding not found; Returning null");
-            return null;
-        } else {
-            if (listResultSize > 1)
-                if (debugFlag)
-                    System.out.printf(
-                            "Returning first service binding of %d found%n",
-                            listResultSize);
-            return listResult.iterator().next();
-        }
-    }
+		// perform search
+		BulkResponse r = bqm.findOrganizations(findQualifiers, namePatterns, null, null, null, null);
+		@SuppressWarnings("unchecked")
+		Collection<Organization> orgs = r.getCollection();
+		if (debugFlag)
+			System.out.printf("Found %d organizations%n", orgs.size());
 
-    private boolean deleteAll(String orgName) throws JAXRException {
+		for (Organization o : orgs) {
 
-        Collection<String> findQualifiers = new ArrayList<String>();
-        findQualifiers.add(FindQualifier.SORT_BY_NAME_DESC);
+			@SuppressWarnings("unchecked")
+			Collection<Service> services = o.getServices();
+			if (debugFlag)
+				System.out.printf("Found %d services%n", services.size());
 
-        Collection<String> namePatterns = new ArrayList<String>();
-        namePatterns.add(orgName);
+			for (Service s : services) {
+				@SuppressWarnings("unchecked")
+				Collection<ServiceBinding> serviceBindinds = (Collection<ServiceBinding>) s.getServiceBindings();
+				if (debugFlag)
+					System.out.printf("Found %d service bindings%n", serviceBindinds.size());
 
-        // Search existing
-        BulkResponse response = bqm.findOrganizations(findQualifiers,
-                namePatterns, null, null, null, null);
-        @SuppressWarnings("unchecked")
-        Collection<Organization> orgs = response.getCollection();
-        Collection<Key> orgsToDelete = new ArrayList<Key>();
+				for (ServiceBinding sb : serviceBindinds) {
+					String org = o.getName().getValue();
+					String url = sb.getAccessURI();
+					UDDIRecord record = new UDDIRecord(org, url);
+					records.add(record);
+				}
+			}
+		}
 
-        for (Organization org : orgs)
-            if (org.getName().getValue().equals(orgName))
-                orgsToDelete.add(org.getKey());
+		// service binding not found
+		if (debugFlag)
+			System.out.printf("Returning list with size %d%n", records.size());
+		return records;
+	}
 
-        // delete previous registrations
-        if (orgsToDelete.isEmpty()) {
-            return true;
-        } else {
-            if (debugFlag)
-                System.out.printf("%d organizations to delete%n",
-                        orgsToDelete.size());
+	private UDDIRecord query(String orgName) throws JAXRException {
+		List<UDDIRecord> listResult = queryAll(orgName);
+		int listResultSize = listResult.size();
 
-            BulkResponse deleteResponse = blcm
-                    .deleteOrganizations(orgsToDelete);
-            boolean result = (deleteResponse.getStatus() == JAXRResponse.STATUS_SUCCESS);
+		if (listResultSize == 0) {
+			// service binding not found
+			if (debugFlag)
+				System.out.println("Service binding not found; Returning null");
+			return null;
+		} else {
+			if (listResultSize > 1)
+				if (debugFlag)
+					System.out.printf("Returning first service binding of %d found%n", listResultSize);
+			return listResult.iterator().next();
+		}
+	}
 
-            if (debugFlag) {
-                if (result) {
-                    System.out
-                            .println("UDDI deregistration completed successfully.");
-                } else {
-                    System.out.println("UDDI error during deregistration.");
-                }
-            }
+	private boolean deleteAll(String orgName) throws JAXRException {
 
-            return result;
-        }
-    }
+		Collection<String> findQualifiers = new ArrayList<String>();
+		findQualifiers.add(FindQualifier.SORT_BY_NAME_DESC);
 
-    private boolean publish(String orgName, String url) throws JAXRException {
-        // derive other names from organization name
-        String serviceName = orgName + " service";
-        String bindingDesc = serviceName + " binding";
+		Collection<String> namePatterns = new ArrayList<String>();
+		namePatterns.add(orgName);
 
-        if (debugFlag) {
-            System.out.printf("Derived service name %s%n", serviceName);
-            System.out.printf("Derived binding description %s%n", bindingDesc);
-        }
+		// Search existing
+		BulkResponse response = bqm.findOrganizations(findQualifiers, namePatterns, null, null, null, null);
+		@SuppressWarnings("unchecked")
+		Collection<Organization> orgs = response.getCollection();
+		Collection<Key> orgsToDelete = new ArrayList<Key>();
 
-        return publish(orgName, serviceName, bindingDesc, url);
-    }
+		for (Organization org : orgs)
+			orgsToDelete.add(org.getKey());
 
-    private boolean publish(String orgName, String serviceName,
-            String bindingDescription, String bindingURL) throws JAXRException {
+		if (debugFlag)
+			System.out.printf("%d organizations to delete%n", orgsToDelete.size());
 
-        // Create organization
-        Organization org = blcm.createOrganization(orgName);
+		// delete previous registrations
+		if (orgsToDelete.isEmpty()) {
+			return true;
+		} else {
+			BulkResponse deleteResponse = blcm.deleteOrganizations(orgsToDelete);
+			boolean result = (deleteResponse.getStatus() == JAXRResponse.STATUS_SUCCESS);
 
-        // Create service
-        Service service = blcm.createService(serviceName);
-        service.setDescription(blcm.createInternationalString(serviceName));
-        // Add service to organization
-        org.addService(service);
-        // Create serviceBinding
-        ServiceBinding serviceBinding = blcm.createServiceBinding();
-        serviceBinding.setDescription(blcm
-                .createInternationalString(bindingDescription));
-        serviceBinding.setValidateURI(false);
-        // Define the Web Service endpoint address here
-        serviceBinding.setAccessURI(bindingURL);
-        if (serviceBinding != null) {
-            // Add serviceBinding to service
-            service.addServiceBinding(serviceBinding);
-        }
+			if (debugFlag) {
+				if (result) {
+					System.out.println("UDDI deregistration completed successfully.");
+				} else {
+					System.out.println("UDDI error during deregistration.");
+				}
+			}
 
-        // register new organization/service/serviceBinding
-        Collection<Organization> orgs = new ArrayList<Organization>();
-        orgs.add(org);
-        BulkResponse response = blcm.saveOrganizations(orgs);
+			return result;
+		}
+	}
 
-        boolean result = (response.getStatus() == JAXRResponse.STATUS_SUCCESS);
+	private boolean publish(UDDIRecord record) throws JAXRException {
+		// derive other names from organization name
+		String serviceName = record.getOrgName() + " service";
+		String bindingDesc = serviceName + " binding";
 
-        if (debugFlag) {
-            if (result) {
-                System.out.println("UDDI registration completed successfully.");
-            } else {
-                System.out.println("UDDI error during registration.");
-            }
-        }
+		if (debugFlag) {
+			System.out.printf("Derived service name %s%n", serviceName);
+			System.out.printf("Derived binding description %s%n", bindingDesc);
+		}
 
-        return result;
-    }
+		return publish(record.getOrgName(), serviceName, bindingDesc, record.getUrl());
+	}
+
+	private boolean publish(String orgName, String serviceName, String bindingDescription, String bindingURL)
+			throws JAXRException {
+
+		// Create organization
+		Organization org = blcm.createOrganization(orgName);
+
+		// Create service
+		Service service = blcm.createService(serviceName);
+		service.setDescription(blcm.createInternationalString(serviceName));
+		// Add service to organization
+		org.addService(service);
+		// Create serviceBinding
+		ServiceBinding serviceBinding = blcm.createServiceBinding();
+		serviceBinding.setDescription(blcm.createInternationalString(bindingDescription));
+		serviceBinding.setValidateURI(false);
+		// Define the Web Service endpoint address here
+		serviceBinding.setAccessURI(bindingURL);
+		if (serviceBinding != null) {
+			// Add serviceBinding to service
+			service.addServiceBinding(serviceBinding);
+		}
+
+		// register new organization/service/serviceBinding
+		Collection<Organization> orgs = new ArrayList<Organization>();
+		orgs.add(org);
+		BulkResponse response = blcm.saveOrganizations(orgs);
+
+		boolean result = (response.getStatus() == JAXRResponse.STATUS_SUCCESS);
+
+		if (debugFlag) {
+			if (result) {
+				System.out.println("UDDI registration completed successfully.");
+			} else {
+				System.out.println("UDDI error during registration.");
+			}
+		}
+
+		return result;
+	}
 
 }

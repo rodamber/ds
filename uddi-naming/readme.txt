@@ -13,6 +13,9 @@ To install package:
   (the JAR is made available in the local maven repository ~/.m2/repository)
   (other projects can now refer to the library as a dependency)
 
+To generate API documentation:
+  mvn javadoc:javadoc
+
 
 To configure the Maven project in Eclipse:
 -----------------------------------------
@@ -31,5 +34,5 @@ If Maven pom.xml do not exist:
 
 
 --
-Revision date: 2015-03-16
+Revision date: 2016-04-25
 leic-sod@disciplinas.tecnico.ulisboa.pt

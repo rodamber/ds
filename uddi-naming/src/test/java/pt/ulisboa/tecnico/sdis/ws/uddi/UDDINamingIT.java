@@ -1,7 +1,11 @@
 package pt.ulisboa.tecnico.sdis.ws.uddi;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.util.Collection;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -10,74 +14,111 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Test suite
+ * Integration Test suite
  */
 public class UDDINamingIT {
 
-    // static members
+	// static members
+	static final String UDDI_URL = "http://localhost:9090";
 
-    // one-time initialization and clean-up
+	static final String TEST_NAME = "TestWebServiceName";
+	static final String TEST_URL = "http://host:port/my-ws/endpoint";
 
-    @BeforeClass
-    public static void oneTimeSetUp() {
+	static final String TEST_NAME_WILDCARD = TEST_NAME.substring(0, 14) + "%";
 
-    }
+	// one-time initialization and clean-up
 
-    @AfterClass
-    public static void oneTimeTearDown() {
+	@BeforeClass
+	public static void oneTimeSetUp() {
+	}
 
-    }
+	@AfterClass
+	public static void oneTimeTearDown() {
+	}
 
+	// members
 
-    // members
+	private UDDINaming uddiNaming;
 
-    String uddiURL = "http://localhost:9090";
-    String name = "MyWebServiceName";
-    String url = "http://host:port/my-ws/endpoint";
+	// initialization and clean-up for each test
 
-    private UDDINaming uddiNaming;
+	@Before
+	public void setUp() throws Exception {
+		uddiNaming = new UDDINaming(UDDI_URL);
+	}
 
+	@After
+	public void tearDown() throws Exception {
+		uddiNaming.unbind(TEST_NAME_WILDCARD);
+		uddiNaming = null;
+	}
 
-    // initialization and clean-up for each test
+	// tests
 
-    @Before
-    public void setUp() throws Exception {
-        uddiNaming = new UDDINaming(uddiURL);
-    }
+	@Test
+	public void testRebindLookup() throws Exception {
+		// publish to UDDI
+		uddiNaming.rebind(TEST_NAME, TEST_URL);
 
-    @After
-    public void tearDown() {
-        uddiNaming = null;
-    }
+		// query UDDI
+		String endpointAddress = uddiNaming.lookup(TEST_NAME);
 
+		assertNotNull(endpointAddress);
+		assertEquals(/* expected */ TEST_URL, /* actual */ endpointAddress);
+	}
 
-    // tests
+	@Test
+	public void testRebindLookupWithWildcard() throws Exception {
+		// publish to UDDI
+		uddiNaming.rebind(TEST_NAME, TEST_URL);
 
-    @Test
-    public void test() throws Exception {
-        // publish to UDDI
-        uddiNaming = new UDDINaming(uddiURL);
-        uddiNaming.rebind(name, url);
+		// query UDDI using a wild-card character '%'
+		String endpointAddress = uddiNaming.lookup(TEST_NAME_WILDCARD);
 
-        // query UDDI
-        String endpointAddress = uddiNaming.lookup(name);
+		assertNotNull(endpointAddress);
+		assertEquals(/* expected */ TEST_URL, /* actual */ endpointAddress);
+	}
 
-        assertNotNull(endpointAddress);
-        assertEquals(/* expected */ url, /* actual */ endpointAddress);
-    }
+	@Test
+	public void testRebindLookupRecord() throws Exception {
+		// publish to UDDI
+		UDDIRecord inputRecord = new UDDIRecord(TEST_NAME, TEST_URL);
+		uddiNaming.rebind(inputRecord);
 
-    @Test
-    public void testWildcard() throws Exception {
-        // publish to UDDI
-        uddiNaming = new UDDINaming(uddiURL);
-        uddiNaming.rebind(name, url);
+		// query UDDI
+		UDDIRecord outputRecord = uddiNaming.lookupRecord(TEST_NAME);
+		assertNotNull(outputRecord);
 
-        // query UDDI using a wildcard character '%'
-        String nameWithWildcard = name.substring(0, 5) + "%";
-        String endpointAddress = uddiNaming.lookup(nameWithWildcard);
+		String endpointAddress = outputRecord.getUrl();
+		assertNotNull(endpointAddress);
+		assertTrue(inputRecord.equals(outputRecord));
+	}
 
-        assertNotNull(endpointAddress);
-        assertEquals(/* expected */ url, /* actual */ endpointAddress);
-    }
+	@Test
+	public void testRebindListRecordsWithWildcard() throws Exception {
+		// publish to UDDI with separate arguments
+		final String name1 = TEST_NAME + "1";
+		final String url1 = TEST_URL + "1";
+		final UDDIRecord record1 = new UDDIRecord(name1, url1);
+		uddiNaming.rebind(name1, url1);
+		// publish record to UDDI
+		final String name2 = TEST_NAME + "2";
+		final String url2 = TEST_URL + "2";
+		final UDDIRecord record2 = new UDDIRecord(name2, url2);
+		uddiNaming.rebind(record2);
+		// create record but do not publish it
+		final String name3 = TEST_NAME + "3";
+		final String url3 = TEST_URL + "3";
+		final UDDIRecord record3 = new UDDIRecord(name3, url3);
+
+		// query UDDI using a wild-card character '%'
+		Collection<UDDIRecord> records = uddiNaming.listRecords(TEST_NAME_WILDCARD);
+
+		assertNotNull(records);
+		assertEquals(/* expected */ 2, /* actual */ records.size());
+		assertTrue(records.contains(record1));
+		assertTrue(records.contains(record2));
+		assertFalse(records.contains(record3));
+	}
 
 }
