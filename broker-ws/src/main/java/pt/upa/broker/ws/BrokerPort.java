@@ -21,13 +21,23 @@ public class BrokerPort implements BrokerPortType
 {
     private BrokerEndpointManager endpoint;
 
-    private List<TransportView> views = new ArrayList<>();
+    private List<TransportView> views;
+    private List<String> transporters;
 
     public BrokerPort(BrokerEndpointManager endpoint) {
+        this();
         this.endpoint = endpoint;
     }
 
-    BrokerPort() { }
+    BrokerPort() {
+        this.views = new ArrayList<>();
+        this.transporters = new ArrayList<>();
+
+        final String upa = "UpaTransporter";
+        for (int i = 1; i < 10; ++i) {
+            this.transporters.add(upa + String.valueOf(i));
+        }
+    }
 
     /* BrokerPortType implementation */
 
@@ -35,20 +45,16 @@ public class BrokerPort implements BrokerPortType
     public String ping(String name)
     {
         String msg = "";
-
-        for (int no = 1; no < 10; ++no) {
-            String transporterName = "UpaTransporter" + String.valueOf(no);
-
-            TransporterClient client;
+        for (final String transp : this.transporters) {
             try {
-                client = new TransporterClient(endpoint.getUddiURL(), transporterName);
-                msg += String.valueOf(no) + ". " + client.ping(name) + "\n";
+                TransporterClient client =
+                    new TransporterClient(endpoint.getUddiURL(), transp);
+                msg += transp + " - " + client.ping(name);
             } catch (TransporterClientException e) {
-                msg += String.valueOf(no) + ". " + e.getMessage() + "\n";
+                msg += transp + " - " + e.getMessage();
             }
         }
-
-        return "Ping:\n" + msg;
+        return "Ping: " + msg;
     }
 
     private JobView findBestOffer(String origin, String destination, int price,
@@ -57,8 +63,7 @@ public class BrokerPort implements BrokerPortType
     {
         JobView bestOffer = null;
 
-        for (int no = 1; no < 10; ++no) {
-            final String transporterName = "UpaTransporter" + String.valueOf(no);
+        for (final String transporterName: this.transporters) {
             try {
                 final TransporterClient client =
                     new TransporterClient(endpoint.getUddiURL(), transporterName);
@@ -206,8 +211,7 @@ public class BrokerPort implements BrokerPortType
     public void clearTransports() {
         this.views.clear();
 
-        for (int no = 1; no < 10; ++no) {
-            String transporterName = "UpaTransporter" + String.valueOf(no);
+        for (final String transporterName: this.transporters) {
             try {
                 TransporterClient client =
                     new TransporterClient(endpoint.getUddiURL(), transporterName);
