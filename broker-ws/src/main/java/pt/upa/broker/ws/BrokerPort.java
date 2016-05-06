@@ -21,7 +21,6 @@ public class BrokerPort implements BrokerPortType
 {
     private BrokerEndpointManager endpoint;
 
-    // RODRIGO:FIXME
     private List<TransportView> views = new ArrayList<>();
 
     public BrokerPort(BrokerEndpointManager endpoint) {
@@ -29,14 +28,6 @@ public class BrokerPort implements BrokerPortType
     }
 
     BrokerPort() { }
-
-    public void addView(TransportView view) {
-        views.add(view);
-    }
-
-    public List<TransportView> getViews() {
-        return views;
-    }
 
     /* BrokerPortType implementation */
 
@@ -68,17 +59,21 @@ public class BrokerPort implements BrokerPortType
 
         for (int no = 1; no < 10; ++no) {
             final String transporterName = "UpaTransporter" + String.valueOf(no);
-
             try {
                 final TransporterClient client =
                     new TransporterClient(endpoint.getUddiURL(), transporterName);
+                final JobView offer =
+                    client.requestJob(origin, destination, price);
 
-                JobView offer = client.requestJob(origin, destination, price);
+                if (offer == null) {
+                    continue;
+                }
                 allOffers.add(offer);
 
-                if (bestOffer == null || offer != null)
-                    if (offer.getJobPrice() < bestOffer.getJobPrice())
-                        bestOffer = offer;
+                if (bestOffer == null ||
+                    offer.getJobPrice() < bestOffer.getJobPrice()) {
+                    bestOffer = offer;
+                }
             } catch (BadLocationFault_Exception e) {
                 UnknownLocationFault fault = new UnknownLocationFault();
                 fault.setLocation(e.getFaultInfo().getLocation());
@@ -105,7 +100,7 @@ public class BrokerPort implements BrokerPortType
         view.setOrigin(origin);
         view.setDestination(destination);
         view.setState(view.getState().REQUESTED);
-        addView(view);
+        this.views.add(view);
 
         // Find the best offer.
         List<JobView> allOffers = new ArrayList<>();
@@ -142,7 +137,9 @@ public class BrokerPort implements BrokerPortType
 
                 boolean accept = bestOffer.getCompanyName().equals(job.getCompanyName());
                 client.decideJob(job.getJobIdentifier(), accept);
-
+                if (accept) {
+                    view.setState(view.getState().BOOKED);
+                }
             } catch (TransporterClientException | BadJobFault_Exception e) {
                 e.printStackTrace();
             }
@@ -155,24 +152,28 @@ public class BrokerPort implements BrokerPortType
     public TransportView viewTransport(String id)
         throws UnknownTransportFault_Exception
     {
-        /* RODRIGO:FIXME:TODO */
-        // return null;
 
-        final TransportView view;
-        for (TransportView v : views) {
-            if (v.getId().equals(id)) {
+        UnknownTransportFault fault = new UnknownTransportFault();
+        fault.setId(id);
+
+        if (id == null || id.equals("")) {
+            throw new UnknownTransportFault_Exception("Null or empty id", fault);
+        }
+
+        TransportView view = null;
+        for (TransportView v : this.views) {
+            String vid = v.getId();
+            if (vid != null && vid.equals(id)) {
                 view = v;
                 break;
             }
         }
 
         if (view == null) {
-            UnknownTransportFault fault = new UnknownTransportFault();
-            fault.setId(id);
             throw new UnknownTransportFault_Exception("Unknown transport", fault);
         }
 
-        if (view.getState().equals(TransportStateView."COMPLETED")) {
+        if (view.getState().equals(TransportStateView.COMPLETED)) {
             return view;
         }
 
@@ -182,27 +183,39 @@ public class BrokerPort implements BrokerPortType
                                       view.getTransporterCompany());
             JobStateView jobState = client.jobStatus(id).getJobState();
 
-            if (jobState.equals(JobStateView."HEADING")) {
-                view.setState(transport.getState().HEADING);
-            } else if (jobState.equals(JobStateView."ONGOING")) {
+            if (jobState.equals(JobStateView.HEADING)) {
+                view.setState(view.getState().HEADING);
+            } else if (jobState.equals(JobStateView.ONGOING)) {
                 view.setState(view.getState().ONGOING);
+            } else if (jobState.equals(JobStateView.COMPLETED)) {
+                view.setState(view.getState().COMPLETED);
             }
-
-            return view;
         } catch (TransporterClientException e) {
             e.printStackTrace();
         }
+
+        return view;
     }
 
     @Override
     public List<TransportView> listTransports() {
-        /* RODRIGO:FIXME:TODO */
-        return null;
+        return this.views;
     }
 
     @Override
     public void clearTransports() {
-        /* RODRIGO:FIXME:TODO */
+        this.views.clear();
+
+        for (int no = 1; no < 10; ++no) {
+            String transporterName = "UpaTransporter" + String.valueOf(no);
+            try {
+                TransporterClient client =
+                    new TransporterClient(endpoint.getUddiURL(), transporterName);
+                client.clearJobs();
+            } catch (TransporterClientException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
