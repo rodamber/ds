@@ -1,11 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <!-- http://maven.apache.org/pom.html#Quick_Overview -->
 
     <groupId>pt.upa.a02</groupId>
-    <artifactId>broker-ws-cli</artifactId>
+    <artifactId>broker-ws-cli_eval</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -23,8 +22,10 @@
 
         <mainclass>pt.upa.broker.BrokerClientApplication</mainclass>
 
+        <ws.url>http://localhost:8080/broker-ws/endpoint</ws.url>
+
         <ws.name>UpaBroker</ws.name>
-        <uddi.url>http://localhost:9090</uddi.url>
+		<uddi.url>http://localhost:9090</uddi.url>
     </properties>
 
     <dependencies>
@@ -33,6 +34,12 @@
             <groupId>com.sun.xml.ws</groupId>
             <artifactId>jaxws-rt</artifactId>
             <version>2.2.10</version>
+        </dependency>
+        <!-- UDDI -->
+        <dependency>
+            <groupId>pt.ulisboa.tecnico.sdis</groupId>
+            <artifactId>uddi-naming</artifactId>
+            <version>1.1</version>
         </dependency>
         <!-- JMockit - must appear before JUnit -->
         <dependency>
@@ -47,12 +54,6 @@
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
-        </dependency>
-        <!-- UDDI Naming -->
-        <dependency>
-            <groupId>pt.ulisboa.tecnico.sdis</groupId>
-            <artifactId>uddi-naming</artifactId>
-            <version>1.0</version>
         </dependency>
     </dependencies>
 
@@ -83,10 +84,10 @@
                 </executions>
                 <configuration>
                     <!-- https://jax-ws-commons.java.net/jaxws-maven-plugin/wsimport-mojo.html -->
-                    <wsdlDirectory>${wsdl.directory}</wsdlDirectory>
-                    <wsdlFiles>
-                        <wsdlFile>${wsdl.filename}</wsdlFile>
-                    </wsdlFiles>
+					<wsdlDirectory>${wsdl.directory}</wsdlDirectory>
+					<wsdlFiles>
+						<wsdlFile>${wsdl.filename}</wsdlFile>
+					</wsdlFiles>
                 </configuration>
                 <dependencies>
                     <dependency>
@@ -124,8 +125,7 @@
                     <killAfter>-1</killAfter>
                     <mainClass>${mainclass}</mainClass>
                     <arguments>
-                        <argument>${uddi.url}</argument>
-                        <argument>${ws.name}</argument>
+                        <argument>${ws.url}</argument>
                     </arguments>
                 </configuration>
             </plugin>
@@ -149,22 +149,6 @@
                         </program>
                     </programs>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>properties-maven-plugin</artifactId>
-                <version>1.0-alpha-2</version>
-                <executions>
-                    <execution>
-                    <phase>generate-resources</phase>
-                    <goals>
-                        <goal>write-project-properties</goal>
-                    </goals>
-                    <configuration>
-                        <outputFile>${project.build.outputDirectory}/my.properties</outputFile>
-                    </configuration>
-                </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>
