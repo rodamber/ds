@@ -55,5 +55,6 @@ public abstract class BrokerMode {
         this.views.add(tv);
     }
 
+    public abstract void shutdown();
 
 }

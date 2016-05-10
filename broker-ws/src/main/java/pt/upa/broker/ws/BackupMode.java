@@ -13,9 +13,17 @@ public class BackupMode extends BrokerMode {
 
     private Timer timer = new Timer();
 
+    private boolean touched = false;
+
     public BackupMode(BrokerPort port) {
         super(port);
-        touch("Backup server is up and running.");
+        port.getEndpoint().unpublishFromUDDI();
+        timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    recover();
+                }
+            }, 60 * 1000, PRIMARY_SERVER_TOUCH_INTERVAL);
     }
 
     @Override
@@ -45,42 +53,40 @@ public class BackupMode extends BrokerMode {
     @Override
     public void updateViewState(String id, TransportStateView newState) {
         super.updateViewState(id, newState);
-        System.out.println("Received new view from primary server.");
-        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
+        System.out.println("Received new view from primary server");
     }
 
     @Override
-    public void touch(String name) {
-        System.out.println("Primary server: " + name);
-        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
+    public void touch(String msg) {
+        this.touched = true;
+        System.out.println("Primary server says: \"" + msg + "\"");
     }
 
     @Override
     public void addView(TransportView tv) {
         super.addView(tv);
-        System.out.println("Received new view from primary server with id " +
-                           tv.getId() + ".");
-        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
-    }
-
-    class RecoveryTask extends TimerTask {
-        @Override
-        public void run() {
-            recover();
-        }
-    }
-
-    private void rescheduleRecovery(int interval) {
-        System.out.println("Received primary server touch");
-        timer.cancel();
-        timer.schedule(new RecoveryTask(), interval);
-        System.out.println("Rescheduled recovery");
+        System.out.println("Received new view from primary server with id " + tv.getId());
     }
 
     private void recover() {
-        System.out.println("Entering recovery mode.");
+        if (this.touched) {
+            this.touched = false;
+            return;
+        }
+
+        System.out.println("Failed to receive touch from primary server");
+
+        timer.cancel();
+        timer.purge();
         port.setServerMode(new PrimaryMode(this));
-        System.out.println("Backup server is now the primary server.");
+
+        System.out.println("Backup server is now the primary server");
+    }
+
+    @Override
+    public void shutdown() {
+        timer.cancel();
+        timer.purge();
     }
 
 }

@@ -24,6 +24,8 @@
         <mainclass>pt.upa.broker.BrokerApplication</mainclass>
 
         <ws.url>http://localhost:8080/broker-ws/endpoint</ws.url>
+        <backup.ws.url></backup.ws.url>
+        <ws.mode>PRIMARY_MODE</ws.mode>
 
         <ws.name>UpaBroker</ws.name>
         <uddi.url>http://localhost:9090</uddi.url>
@@ -127,6 +129,8 @@
                         <argument>${uddi.url}</argument>
                         <argument>${ws.name}</argument>
                         <argument>${ws.url}</argument>
+                        <argument>${ws.mode}</argument>
+                        <argument>${backup.ws.url}</argument>
                     </arguments>
                 </configuration>
             </plugin>
