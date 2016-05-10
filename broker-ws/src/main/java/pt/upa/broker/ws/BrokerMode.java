@@ -2,6 +2,8 @@ package pt.upa.broker.ws;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 
 /**
@@ -17,10 +19,6 @@ public abstract class BrokerMode {
         }
         this.endpoint = endpoint;
         this.views = new ArrayList<>();
-    }
-
-    public void addView(TransportView tv) {
-        this.views.add(tv);
     }
 
     public List<TransportView> listTransports() {
@@ -40,5 +38,22 @@ public abstract class BrokerMode {
 
     public abstract TransportView viewTransport(String id)
         throws UnknownTransportFault_Exception;
+
+    public void updateViewState(String id, TransportStateView newState) {
+        this.views.stream()
+            .filter(v -> v.getId().equals(id))
+            .findFirst()
+            .get()
+            .setState(newState);
+    }
+
+    public void touch(String name) {
+    }
+
+    public void addView(TransportView tv) {
+        // RODRIGO:FIXME: Should throw an exception if view already exists.
+        this.views.add(tv);
+    }
+
 
 }

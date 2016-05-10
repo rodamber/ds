@@ -54,4 +54,20 @@ public class BackupMode extends BrokerMode {
         throw new UnknownTransportFault_Exception("Unknown id", fault);
     }
 
+    @Override
+    public void updateViewState(String id, TransportStateView newState) {
+        // TODO
+    }
+
+    @Override
+    public void touch(String name) {
+        // TODO
+    }
+
+    @Override
+    public void addView(TransportView tv) {
+        super.addView(tv);
+        // TODO
+    }
+
 }

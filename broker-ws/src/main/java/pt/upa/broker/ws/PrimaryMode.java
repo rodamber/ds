@@ -149,6 +149,23 @@ public class PrimaryMode extends BrokerMode {
         }
     }
 
+    @Override
+    public void updateViewState(String id, TransportStateView newState) {
+        // TODO
+    }
+
+    @Override
+    public void touch(String name) {
+        // TODO
+    }
+
+    @Override
+    public void addView(TransportView tv) {
+        super.addView(tv);
+        // TODO
+    }
+
+
     /****************************** Helpers ***********************************/
 
     private JobView findBestOffer(String origin, String destination, int price,

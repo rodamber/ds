@@ -72,9 +72,8 @@ public class BrokerPort implements BrokerPortType {
 
     @Override
     public void updateViewState(String id, TransportStateView newState) {
-        // mode.updateViewState(id, newState);
+        mode.updateViewState(id, newState);
     }
-
 
     @Override
     public void addView(TransportView tv) {
@@ -83,6 +82,6 @@ public class BrokerPort implements BrokerPortType {
 
     @Override
     public void touch(String name) {
-        // mode.touch(name);
+        mode.touch(name);
     }
 }
