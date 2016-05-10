@@ -13,9 +13,16 @@ public class BackupMode extends BrokerMode {
 
     private Timer timer = new Timer();
 
+    private boolean touched = false;
+
     public BackupMode(BrokerPort port) {
         super(port);
-        touch("Backup server is up and running.");
+        timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    recover();
+                }
+            }, 60 * 1000, PRIMARY_SERVER_TOUCH_INTERVAL);
     }
 
     @Override
@@ -46,13 +53,12 @@ public class BackupMode extends BrokerMode {
     public void updateViewState(String id, TransportStateView newState) {
         super.updateViewState(id, newState);
         System.out.println("Received new view from primary server.");
-        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
     }
 
     @Override
-    public void touch(String name) {
-        System.out.println("Primary server: " + name);
-        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
+    public void touch(String msg) {
+        this.touched = true;
+        System.out.println("Primary server says: " + msg);
     }
 
     @Override
@@ -60,26 +66,20 @@ public class BackupMode extends BrokerMode {
         super.addView(tv);
         System.out.println("Received new view from primary server with id " +
                            tv.getId() + ".");
-        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
-    }
-
-    class RecoveryTask extends TimerTask {
-        @Override
-        public void run() {
-            recover();
-        }
-    }
-
-    private void rescheduleRecovery(int interval) {
-        System.out.println("Received primary server touch");
-        timer.cancel();
-        timer.schedule(new RecoveryTask(), interval);
-        System.out.println("Rescheduled recovery");
     }
 
     private void recover() {
-        System.out.println("Entering recovery mode.");
+        if (this.touched) {
+            this.touched = false;
+            return;
+        }
+
+        timer.cancel();
+        timer.purge();
         port.setServerMode(new PrimaryMode(this));
+
+        // RODRIGO:TODO:Republish to UDDI
+
         System.out.println("Backup server is now the primary server.");
     }
 

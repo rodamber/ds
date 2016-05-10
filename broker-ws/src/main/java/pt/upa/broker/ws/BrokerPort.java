@@ -19,27 +19,26 @@ import pt.upa.transporter.ws.cli.*;
 )
 public class BrokerPort implements BrokerPortType {
     // Represents the possible modes of a server.
-    public static final int PRIMARY_MODE = 0;
-    public static final int BACKUP_MODE = 1;
+    public static final String PRIMARY_MODE = "PRIMARY_MODE";
+    public static final String BACKUP_MODE  = "BACKUP_MODE";
 
     private BrokerMode mode;
     private BrokerEndpointManager endpoint;
 
-    public BrokerPort(BrokerEndpointManager endpoint, int mode,
-                      Optional<String> backupServerURL) {
+    public BrokerPort(BrokerEndpointManager endpoint, String mode,
+                      Optional<String> backupServerWsURL) {
         if (endpoint == null) {
             throw new IllegalArgumentException("endpoint must not be null");
         }
         this.endpoint = endpoint;
 
-        if (mode == PRIMARY_MODE) {
-            final String url = backupServerURL.isPresent() ?
-                backupServerURL.get() : null;
-            this.mode = new PrimaryMode(this, url);
-        } else if (mode == BACKUP_MODE) {
+        if (mode.equals(PRIMARY_MODE)) {
+            this.mode = new PrimaryMode(this, backupServerWsURL);
+        } else if (mode.equals(BACKUP_MODE)) {
             this.mode = new BackupMode(this);
         } else {
-            throw new IllegalArgumentException("mode must be PRIMARY_MODE or BACKUP_MODE");
+            throw new IllegalArgumentException
+                ("mode must be " + PRIMARY_MODE + " or " + BACKUP_MODE);
         }
     }
 

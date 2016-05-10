@@ -14,17 +14,21 @@ import pt.upa.transporter.ws.cli.*;
 
 public class PrimaryMode extends BrokerMode {
     private static final int IM_ALIVE_TOUCH_INTERVAL = 5 * 1000;
-    private static final String IM_ALIVE_TOUCH_MSG = "Up and running.";
+    private static final String IM_ALIVE_TOUCH_MSG = "I'm Alive";
 
     private Optional<String> backupServerWsURL = Optional.empty();
     private final Timer timer = new Timer();
 
     private List<String> transporters = new ArrayList<>();
 
-    public PrimaryMode(BrokerPort port, String backupServerWsURL) {
+    public PrimaryMode(BrokerPort port, Optional<String> backupServerWsURL) {
         this(port);
-        this.backupServerWsURL = Optional.ofNullable(backupServerWsURL);
-        touchBackupServer(IM_ALIVE_TOUCH_MSG, IM_ALIVE_TOUCH_INTERVAL);
+        this.backupServerWsURL = backupServerWsURL;
+        if (backupServerWsURL.isPresent()) {
+            touchBackupServer(IM_ALIVE_TOUCH_MSG, IM_ALIVE_TOUCH_INTERVAL);
+            System.out.println("Backup server is running at " +
+                               port.getEndpoint().getWsURL());
+        }
     }
 
     public PrimaryMode(BrokerPort port) {
@@ -170,15 +174,12 @@ public class PrimaryMode extends BrokerMode {
             return;
         }
 
-        System.out.println("TOUCH BackupServer at " + backupServerWsURL.get());
         try {
             BrokerClient client = new BrokerClient(backupServerWsURL.get());
-            System.out.println("Created client for server at " + backupServerWsURL.get());
 
             client.touch(msg);
-            System.out.println("Touched backup server.");
+            System.out.println("Touched backup server");
         } catch (BrokerClientException e) {
-            System.out.println("Could not reach backup server.");
             e.printStackTrace();
         }
 
@@ -188,7 +189,6 @@ public class PrimaryMode extends BrokerMode {
                     touchBackupServer(msg, interval);
                 }
             }, interval);
-        System.out.println("Rescheduled touch to backup server.");
     }
 
     /****************************** Helpers ***********************************/
