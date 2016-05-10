@@ -47,55 +47,19 @@ public class PrimaryMode extends BrokerMode {
         throws InvalidPriceFault_Exception, UnavailableTransportFault_Exception,
                UnavailableTransportPriceFault_Exception,
                UnknownLocationFault_Exception {
-        // View for the requested transport.
-        TransportView view = new TransportView();
-        view.setOrigin(origin);
-        view.setDestination(destination);
+        final TransportView view = addNewView(origin, destination);
         view.setState(view.getState().REQUESTED);
-        addView(view);
 
-        // Find the best offer.
         List<JobView> allOffers = new ArrayList<>();
         JobView bestOffer = findBestOffer(origin, destination, price, allOffers);
 
-        if (bestOffer == null) { // Then there are no offers.
-            view.setState(view.getState().FAILED);
-
-            UnavailableTransportFault fault = new UnavailableTransportFault();
-            fault.setOrigin(origin);
-            fault.setDestination(destination);
-            throw new UnavailableTransportFault_Exception("Unavailable Transport", fault);
-        }
-
+        assertHasOffer(view, bestOffer);
         view.setState(view.getState().BUDGETED);
 
-        if (bestOffer.getJobPrice() > price) { // Then not a good enough price.
-            view.setState(view.getState().FAILED);
-            UnavailableTransportPriceFault fault = new UnavailableTransportPriceFault();
-            fault.setBestPriceFound(bestOffer.getJobPrice());
-            throw new UnavailableTransportPriceFault_Exception("Price too high", fault);
-        }
+        assertGoodOffer(view, bestOffer, price);
+        updateViewInfo(view, bestOffer);
 
-        // Set view parameters for requested transport accordingly.
-        view.setId(bestOffer.getJobIdentifier());
-        view.setPrice(bestOffer.getJobPrice());
-        view.setTransporterCompany(bestOffer.getCompanyName());
-
-        // Accept best offer and reject all others.
-        for (JobView job : allOffers) {
-            try {
-                final TransporterClient client =
-                    new TransporterClient(endpoint.getUddiURL(), job.getCompanyName());
-
-                boolean accept = bestOffer.getCompanyName().equals(job.getCompanyName());
-                client.decideJob(job.getJobIdentifier(), accept);
-                if (accept) {
-                    view.setState(view.getState().BOOKED);
-                }
-            } catch (TransporterClientException | BadJobFault_Exception e) {
-                e.printStackTrace();
-            }
-        }
+        acceptBestAndRejectAllOtherOffers(view, bestOffer, allOffers);
 
         return view.getId();
     }
@@ -197,5 +161,62 @@ public class PrimaryMode extends BrokerMode {
         }
         return bestOffer;
     }
+
+    private TransportView addNewView(String origin, String destination) {
+        final TransportView view = new TransportView();
+        view.setOrigin(origin);
+        view.setDestination(destination);
+        addView(view);
+        return view;
+    }
+
+    private void assertHasOffer(TransportView view, JobView offer)
+        throws UnavailableTransportFault_Exception {
+        if (offer == null) { // Then there are no offers.
+            view.setState(view.getState().FAILED);
+
+            UnavailableTransportFault fault = new UnavailableTransportFault();
+            fault.setOrigin(view.getOrigin());
+            fault.setDestination(view.getDestination());
+            throw new UnavailableTransportFault_Exception("Unavailable Transport", fault);
+        }
+    }
+
+    private void assertGoodOffer(TransportView view, JobView offer, int price)
+        throws UnavailableTransportPriceFault_Exception {
+        if (offer.getJobPrice() > price) { // Then not a good enough price.
+            view.setState(view.getState().FAILED);
+
+            UnavailableTransportPriceFault fault = new UnavailableTransportPriceFault();
+            fault.setBestPriceFound(offer.getJobPrice());
+            throw new UnavailableTransportPriceFault_Exception("Price too high", fault);
+        }
+    }
+
+    private void updateViewInfo(TransportView view, JobView offer) {
+        view.setId(offer.getJobIdentifier());
+        view.setPrice(offer.getJobPrice());
+        view.setTransporterCompany(offer.getCompanyName());
+    }
+
+    private void acceptBestAndRejectAllOtherOffers(TransportView view,
+                                                   JobView bestOffer,
+                                                   List<JobView> allOffers) {
+        for (JobView job : allOffers) {
+            try {
+                final TransporterClient client =
+                    new TransporterClient(endpoint.getUddiURL(),
+                                          job.getCompanyName());
+                boolean accept = bestOffer.getCompanyName().equals(job.getCompanyName());
+                client.decideJob(job.getJobIdentifier(), accept);
+                if (accept) {
+                    view.setState(view.getState().BOOKED);
+                }
+            } catch (TransporterClientException | BadJobFault_Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 }
