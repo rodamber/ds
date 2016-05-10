@@ -13,8 +13,8 @@ import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
 
 public class PrimaryMode extends BrokerMode {
-    private static final int IM_ALIVE_PING_INTERVAL = 5 * 1000;
-    private static final String IM_ALIVE_PING_MSG = "Primary server is up and running";
+    private static final int IM_ALIVE_TOUCH_INTERVAL = 5 * 1000;
+    private static final String IM_ALIVE_TOUCH_MSG = "Up and running.";
 
     private Optional<String> backupServerWsURL = Optional.empty();
     private final Timer timer = new Timer();
@@ -25,7 +25,7 @@ public class PrimaryMode extends BrokerMode {
         this(endpoint);
         this.backupServerWsURL = Optional.ofNullable(backupServerWsURL);
 
-        ping(IM_ALIVE_PING_MSG);
+        touchBackupServer(IM_ALIVE_TOUCH_MSG, IM_ALIVE_TOUCH_INTERVAL);
     }
 
     private PrimaryMode(BrokerEndpointManager endpoint) {
@@ -38,31 +38,19 @@ public class PrimaryMode extends BrokerMode {
     }
 
     @Override
-    public String ping(String name) {
-        String msg;
-        if (backupServerWsURL.isPresent()) {
-            msg = "PING BackupServer at " + backupServerWsURL.get() + "\n";
-
-            System.out.printf("Creating client for server at %s%n", backupServerWsURL);
+    public String ping(String name)
+    {
+        String msg = "";
+        for (final String transp : this.transporters) {
             try {
-                BrokerClient client = new BrokerClient(backupServerWsURL.get());
-                msg += client.ping(name);
-            } catch (BrokerClientException e) {
-                msg += "Could not reach backup server";
-                e.printStackTrace();
+                TransporterClient client =
+                    new TransporterClient(endpoint.getUddiURL(), transp);
+                msg += transp + " - " + client.ping(name);
+            } catch (TransporterClientException e) {
+                msg += transp + " - " + e.getMessage();
             }
-
-            timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        ping(IM_ALIVE_PING_MSG);
-                    }
-                }, IM_ALIVE_PING_INTERVAL);
-        } else {
-            msg = "No backup server URL was given";
         }
-        System.out.println(msg);
-        return msg;
+        return "Ping: " + msg;
     }
 
     @Override
@@ -173,6 +161,32 @@ public class PrimaryMode extends BrokerMode {
         }
     }
 
+    private void touchBackupServer(String msg, int interval) {
+        if (!backupServerWsURL.isPresent()) {
+            System.out.println("No backup server URL was given");
+            return;
+        }
+
+        System.out.println("TOUCH BackupServer at " + backupServerWsURL.get());
+        try {
+            BrokerClient client = new BrokerClient(backupServerWsURL.get());
+            System.out.println("Created client for server at " + backupServerWsURL.get());
+
+            client.touch(msg);
+            System.out.println("Touched backup server.");
+        } catch (BrokerClientException e) {
+            System.out.println("Could not reach backup server.");
+            e.printStackTrace();
+        }
+
+        timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    touchBackupServer(msg, interval);
+                }
+            }, interval);
+        System.out.println("Rescheduled touch to backup server.");
+    }
 
     /****************************** Helpers ***********************************/
 

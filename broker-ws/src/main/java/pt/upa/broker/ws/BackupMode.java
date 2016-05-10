@@ -15,7 +15,12 @@ public class BackupMode extends BrokerMode {
 
     public BackupMode(BrokerEndpointManager endpoint) {
         super(endpoint);
-        ping("");
+        touch("Backup server is up and running.");
+    }
+
+    @Override
+    public String ping(String name) {
+        return "OK";
     }
 
     @Override
