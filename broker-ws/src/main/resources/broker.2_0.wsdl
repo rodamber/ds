@@ -126,12 +126,22 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
       </xs:complexType>
       <xs:element name="clearTransportsResponse" type="tns:clearTransportsResponse" />
 
-      <xs:complexType name="updateTransports">
+
+      <xs:complexType name="updateViewState">
+        <xs:sequence>
+          <xs:element name="id" type="xs:string" minOccurs="0" />
+          <xs:element name="view" type="tns:transportStateView" minOccurs="0" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="updateViewState" type="tns:updateViewState" />
+
+
+      <xs:complexType name="addView">
         <xs:sequence>
           <xs:element name="view" type="tns:transportView" minOccurs="0" />
         </xs:sequence>
       </xs:complexType>
-      <xs:element name="updateTransports" type="tns:updateTransports" />
+      <xs:element name="addView" type="tns:addView" />
 
 
       <xs:complexType name="UnknownLocationFault">
@@ -213,8 +223,12 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
     <part name="parameters" element="tns:clearTransportsResponse" />
   </message>
 
-  <message name="updateTransports">
-    <part name="parameters" element="tns:updateTransports" />
+  <message name="updateViewState">
+    <part name="parameters" element="tns:updateViewState" />
+  </message>
+
+  <message name="addView">
+    <part name="parameters" element="tns:addView" />
   </message>
 
   <message name="UnknownLocationFault">
@@ -295,10 +309,16 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
           message="tns:clearTransportsResponse" />
     </operation>
 
-    <operation name="updateTransports">
+    <operation name="updateViewState">
       <input
-          wsam:Action="http://ws.broker.upa.pt/BrokerPort/updateTransportsRequest"
-          message="tns:updateTransports" />
+          wsam:Action="http://ws.broker.upa.pt/BrokerPort/updateViewStateRequest"
+          message="tns:updateViewState" />
+    </operation>
+
+    <operation name="addView">
+      <input
+          wsam:Action="http://ws.broker.upa.pt/BrokerPort/addViewRequest"
+          message="tns:addView" />
     </operation>
 
   </portType>
@@ -382,7 +402,14 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
       </output>
     </operation>
 
-    <operation name="updateTransports">
+    <operation name="updateViewState">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
+    </operation>
+
+    <operation name="addView">
       <soap:operation soapAction="" />
       <input>
         <soap:body use="literal" />

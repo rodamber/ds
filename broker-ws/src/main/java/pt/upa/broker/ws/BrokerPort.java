@@ -41,10 +41,6 @@ public class BrokerPort implements BrokerPortType {
 
     /* BrokerPortType implementation */
 
-    public void addView(TransportView tv) {
-        mode.addView(tv);
-    }
-
     @Override
     public String ping(String name) {
         return mode.ping(name);
@@ -74,4 +70,19 @@ public class BrokerPort implements BrokerPortType {
         mode.clearTransports();
     }
 
+    @Override
+    public void updateViewState(String id, TransportStateView newState) {
+        // mode.updateViewState(id, newState);
+    }
+
+
+    @Override
+    public void addView(TransportView tv) {
+        mode.addView(tv);
+    }
+
+    @Override
+    public void touch(String name) {
+        // mode.touch(name);
+    }
 }
