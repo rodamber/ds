@@ -9,30 +9,13 @@ import pt.upa.transporter.ws.cli.*;
 
 
 public class BackupMode extends BrokerMode {
-    private static final int PRIMARY_SERVER_PING_INTERVAL = 10 * 1000;
-    private static final String PRIMARY_SERVER_PING_MSG = "OK";
+    private static final int PRIMARY_SERVER_TOUCH_INTERVAL = 10 * 1000;
 
     private Timer timer = new Timer();
 
     public BackupMode(BrokerEndpointManager endpoint) {
         super(endpoint);
         ping("");
-    }
-
-    @Override
-    public String ping(String name) {
-        timer.cancel();
-        timer.schedule(new TimerTask() {
-               @Override
-               public void run() {
-                   recover();
-               }
-            }, PRIMARY_SERVER_PING_INTERVAL);
-        return PRIMARY_SERVER_PING_MSG;
-    }
-
-    private void recover() {
-        // TODO
     }
 
     @Override
@@ -56,17 +39,40 @@ public class BackupMode extends BrokerMode {
 
     @Override
     public void updateViewState(String id, TransportStateView newState) {
-        // TODO
+        super.updateViewState(id, newState);
+        System.out.println("Received new view from primary server.");
+        scheduleRecovery();
     }
 
     @Override
     public void touch(String name) {
-        // TODO
+        System.out.println("Primary server: " + name);
+        scheduleRecovery();
     }
 
     @Override
     public void addView(TransportView tv) {
         super.addView(tv);
+        System.out.println("Received new view from primary server with id " +
+                           tv.getId() + ".");
+        scheduleRecovery();
+    }
+
+    class RecoveryTask extends TimerTask {
+        @Override
+        public void run() {
+            recover();
+        }
+    }
+
+    private void scheduleRecovery() {
+        System.out.println("Received primary server touch");
+        timer.cancel();
+        timer.schedule(new RecoveryTask(), PRIMARY_SERVER_TOUCH_INTERVAL);
+        System.out.println("Rescheduled recovery");
+    }
+
+    private void recover() {
         // TODO
     }
 
