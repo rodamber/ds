@@ -4,23 +4,33 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import pt.upa.broker.ws.cli.*;
 
 import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
 
 public class PrimaryMode extends BrokerMode {
-    private Optional<String> backupServerWsURL;
+    private static final int IM_ALIVE_PING_INTERVAL = 5000;
+    private static final String IM_ALIVE_PING_MSG = "Primary server is up and running";
+
+    private Optional<String> backupServerWsURL = Optional.empty();
+    private final Timer timer = new Timer();
 
     private List<String> transporters;
 
     public PrimaryMode(BrokerEndpointManager endpoint, String backupServerWsURL) {
         this(endpoint);
         this.backupServerWsURL = Optional.ofNullable(backupServerWsURL);
+
+        ping(IM_ALIVE_PING_MSG);
     }
 
     private PrimaryMode(BrokerEndpointManager endpoint) {
         super(endpoint);
-        this.transporters = new ArrayList<>();
+
         final String upa = "UpaTransporter";
         for (int i = 1; i < 10; ++i) {
             this.transporters.add(upa + String.valueOf(i));
@@ -29,17 +39,30 @@ public class PrimaryMode extends BrokerMode {
 
     @Override
     public String ping(String name) {
-        String msg = "";
-        for (final String transp : this.transporters) {
+        String msg;
+        if (backupServerWsURL.isPresent()) {
+            msg = "PING BackupServer at " + backupServerWsURL.get() + "\n";
+
+            System.out.printf("Creating client for server at %s%n", backupServerWsURL);
             try {
-                TransporterClient client =
-                    new TransporterClient(endpoint.getUddiURL(), transp);
-                msg += transp + " - " + client.ping(name);
-            } catch (TransporterClientException e) {
-                msg += transp + " - " + e.getMessage();
+                BrokerClient client = new BrokerClient(backupServerWsURL.get());
+                msg += client.ping(name);
+            } catch (BrokerClientException e) {
+                msg += "Could not reach backup server";
+                e.printStackTrace();
             }
+
+            timer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        ping(IM_ALIVE_PING_MSG);
+                    }
+                }, IM_ALIVE_PING_INTERVAL);
+        } else {
+            msg = "No backup server URL was given";
         }
-        return "Ping: " + msg;
+        System.out.println(msg);
+        return msg;
     }
 
     @Override
@@ -217,6 +240,5 @@ public class PrimaryMode extends BrokerMode {
             }
         }
     }
-
 
 }
