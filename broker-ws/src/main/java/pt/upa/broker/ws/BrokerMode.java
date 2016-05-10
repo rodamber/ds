@@ -10,14 +10,14 @@ import java.util.stream.Stream;
  * State design pattern. Represents a possible mode for the server.
  */
 public abstract class BrokerMode {
-    protected BrokerEndpointManager endpoint;
+    protected BrokerPort port;
     protected List<TransportView> views;
 
-    public BrokerMode(BrokerEndpointManager endpoint) {
-        if (endpoint == null) {
-            throw new IllegalArgumentException("endpoint must not be null");
+    public BrokerMode(BrokerPort port) {
+        if (port == null) {
+            throw new IllegalArgumentException("port must not be null");
         }
-        this.endpoint = endpoint;
+        this.port = port;
         this.views = new ArrayList<>();
     }
 

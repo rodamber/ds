@@ -12,7 +12,7 @@ import pt.upa.transporter.ws.cli.*;
 @WebService(
     name              = "BrokerWebService",
     targetNamespace   = "http://ws.broker.upa.pt/",
-    wsdlLocation      = "broker.1_0.wsdl",
+    wsdlLocation      = "broker.2_0.wsdl",
     serviceName       = "BrokerService",
     portName          = "BrokerPort",
     endpointInterface = "pt.upa.broker.ws.BrokerPortType"
@@ -20,23 +20,35 @@ import pt.upa.transporter.ws.cli.*;
 public class BrokerPort implements BrokerPortType {
     // Represents the possible modes of a server.
     public static final int PRIMARY_MODE = 0;
-    public static final int SECONDARY_MODE = 1;
+    public static final int BACKUP_MODE = 1;
 
     private BrokerMode mode;
+    private BrokerEndpointManager endpoint;
 
     public BrokerPort(BrokerEndpointManager endpoint, int mode,
                       Optional<String> backupServerURL) {
-        if (mode == PRIMARY_MODE) {
-            try{
-                this.mode = new PrimaryMode(endpoint, backupServerURL.get());
-            } catch (NoSuchElementException e) {
-                throw new IllegalArgumentException("Must provide backupServerURL when starting in primary mode", e);
-            }
-        } else if (mode == SECONDARY_MODE) {
-            // this.mode = new SecondaryMode(endpoint);
-        } else {
-            throw new IllegalArgumentException("mode must be PRIMARY or SECONDARY");
+        if (endpoint == null) {
+            throw new IllegalArgumentException("endpoint must not be null");
         }
+        this.endpoint = endpoint;
+
+        if (mode == PRIMARY_MODE) {
+            final String url = backupServerURL.isPresent() ?
+                backupServerURL.get() : null;
+            this.mode = new PrimaryMode(this, url);
+        } else if (mode == BACKUP_MODE) {
+            this.mode = new BackupMode(this);
+        } else {
+            throw new IllegalArgumentException("mode must be PRIMARY_MODE or BACKUP_MODE");
+        }
+    }
+
+    public BrokerEndpointManager getEndpoint() {
+        return this.endpoint;
+    }
+
+    public void setServerMode(BrokerMode mode) {
+        this.mode = mode;
     }
 
     /* BrokerPortType implementation */

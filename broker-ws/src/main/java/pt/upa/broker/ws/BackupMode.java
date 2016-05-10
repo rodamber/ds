@@ -13,8 +13,8 @@ public class BackupMode extends BrokerMode {
 
     private Timer timer = new Timer();
 
-    public BackupMode(BrokerEndpointManager endpoint) {
-        super(endpoint);
+    public BackupMode(BrokerPort port) {
+        super(port);
         touch("Backup server is up and running.");
     }
 
@@ -46,13 +46,13 @@ public class BackupMode extends BrokerMode {
     public void updateViewState(String id, TransportStateView newState) {
         super.updateViewState(id, newState);
         System.out.println("Received new view from primary server.");
-        scheduleRecovery();
+        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
     }
 
     @Override
     public void touch(String name) {
         System.out.println("Primary server: " + name);
-        scheduleRecovery();
+        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class BackupMode extends BrokerMode {
         super.addView(tv);
         System.out.println("Received new view from primary server with id " +
                            tv.getId() + ".");
-        scheduleRecovery();
+        rescheduleRecovery(PRIMARY_SERVER_TOUCH_INTERVAL);
     }
 
     class RecoveryTask extends TimerTask {
@@ -70,15 +70,17 @@ public class BackupMode extends BrokerMode {
         }
     }
 
-    private void scheduleRecovery() {
+    private void rescheduleRecovery(int interval) {
         System.out.println("Received primary server touch");
         timer.cancel();
-        timer.schedule(new RecoveryTask(), PRIMARY_SERVER_TOUCH_INTERVAL);
+        timer.schedule(new RecoveryTask(), interval);
         System.out.println("Rescheduled recovery");
     }
 
     private void recover() {
-        // TODO
+        System.out.println("Entering recovery mode.");
+        port.setServerMode(new PrimaryMode(this));
+        System.out.println("Backup server is now the primary server.");
     }
 
 }

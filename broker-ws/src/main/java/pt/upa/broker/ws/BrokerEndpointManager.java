@@ -31,8 +31,7 @@ public class BrokerEndpointManager {
 
     /** Port implementation */
     private BrokerPort portImpl =
-        new BrokerPort(this, BrokerPort.PRIMARY_MODE,
-                       Optional.of("http://localhost:8091/broker-ws/endpoint"));
+        new BrokerPort(this, BrokerPort.PRIMARY_MODE, Optional.empty());
 
     /** Obtain Port implementation */
     public BrokerPortType getPort() {

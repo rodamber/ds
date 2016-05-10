@@ -19,22 +19,25 @@ public class PrimaryMode extends BrokerMode {
     private Optional<String> backupServerWsURL = Optional.empty();
     private final Timer timer = new Timer();
 
-    private List<String> transporters;
+    private List<String> transporters = new ArrayList<>();
 
-    public PrimaryMode(BrokerEndpointManager endpoint, String backupServerWsURL) {
-        this(endpoint);
+    public PrimaryMode(BrokerPort port, String backupServerWsURL) {
+        this(port);
         this.backupServerWsURL = Optional.ofNullable(backupServerWsURL);
-
         touchBackupServer(IM_ALIVE_TOUCH_MSG, IM_ALIVE_TOUCH_INTERVAL);
     }
 
-    private PrimaryMode(BrokerEndpointManager endpoint) {
-        super(endpoint);
-
+    public PrimaryMode(BrokerPort port) {
+        super(port);
         final String upa = "UpaTransporter";
         for (int i = 1; i < 10; ++i) {
             this.transporters.add(upa + String.valueOf(i));
         }
+    }
+
+    public PrimaryMode(BackupMode backupMode) {
+        this(backupMode.port);
+        this.views = backupMode.views;
     }
 
     @Override
@@ -44,7 +47,7 @@ public class PrimaryMode extends BrokerMode {
         for (final String transp : this.transporters) {
             try {
                 TransporterClient client =
-                    new TransporterClient(endpoint.getUddiURL(), transp);
+                    new TransporterClient(port.getEndpoint().getUddiURL(), transp);
                 msg += transp + " - " + client.ping(name);
             } catch (TransporterClientException e) {
                 msg += transp + " - " + e.getMessage();
@@ -105,7 +108,7 @@ public class PrimaryMode extends BrokerMode {
 
         try {
             TransporterClient client =
-                new TransporterClient(endpoint.getUddiURL(),
+                new TransporterClient(port.getEndpoint().getUddiURL(),
                                       view.getTransporterCompany());
             JobStateView jobState = client.jobStatus(id).getJobState();
 
@@ -129,7 +132,7 @@ public class PrimaryMode extends BrokerMode {
         for (final String transporterName: this.transporters) {
             try {
                 TransporterClient client =
-                    new TransporterClient(endpoint.getUddiURL(), transporterName);
+                    new TransporterClient(port.getEndpoint().getUddiURL(), transporterName);
                 client.clearJobs();
             } catch (TransporterClientException e) {
                 e.printStackTrace();
@@ -197,7 +200,7 @@ public class PrimaryMode extends BrokerMode {
         for (final String transporterName: this.transporters) {
             try {
                 final TransporterClient client =
-                    new TransporterClient(endpoint.getUddiURL(), transporterName);
+                    new TransporterClient(port.getEndpoint().getUddiURL(), transporterName);
                 final JobView offer =
                     client.requestJob(origin, destination, price);
                 if (offer == null) {
@@ -267,7 +270,7 @@ public class PrimaryMode extends BrokerMode {
         for (JobView job : allOffers) {
             try {
                 final TransporterClient client =
-                    new TransporterClient(endpoint.getUddiURL(),
+                    new TransporterClient(port.getEndpoint().getUddiURL(),
                                           job.getCompanyName());
                 boolean accept = bestOffer.getCompanyName().equals(job.getCompanyName());
                 client.decideJob(job.getJobIdentifier(), accept);
