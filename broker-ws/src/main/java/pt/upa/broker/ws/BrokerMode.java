@@ -12,6 +12,9 @@ public abstract class BrokerMode {
     protected List<TransportView> views;
 
     public BrokerMode(BrokerEndpointManager endpoint) {
+        if (endpoint == null) {
+            throw new IllegalArgumentException("endpoint must not be null");
+        }
         this.endpoint = endpoint;
         this.views = new ArrayList<>();
     }

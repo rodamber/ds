@@ -1,5 +1,7 @@
 package pt.upa.broker.ws;
 
+import java.util.Optional;
+
 import java.io.IOException;
 import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
@@ -28,7 +30,9 @@ public class BrokerEndpointManager {
     private String wsURL = null;
 
     /** Port implementation */
-    private BrokerPort portImpl = new BrokerPort(this, BrokerPort.PRIMARY_MODE);
+    private BrokerPort portImpl =
+        new BrokerPort(this, BrokerPort.PRIMARY_MODE,
+                       Optional.of("http://localhost:8091/broker-ws/endpoint"));
 
     /** Obtain Port implementation */
     public BrokerPortType getPort() {

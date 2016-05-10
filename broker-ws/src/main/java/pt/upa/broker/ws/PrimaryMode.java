@@ -9,13 +9,16 @@ import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
 
 public class PrimaryMode extends BrokerMode {
-    private Optional<BrokerPort> backupServer = Optional.empty();
+    private Optional<String> backupServerWsURL;
+
     private List<String> transporters;
 
-    // Create constructor that receives the location of the backup server
-    // PrimaryMode() {}
+    public PrimaryMode(BrokerEndpointManager endpoint, String backupServerWsURL) {
+        this(endpoint);
+        this.backupServerWsURL = Optional.ofNullable(backupServerWsURL);
+    }
 
-    PrimaryMode(BrokerEndpointManager endpoint) {
+    private PrimaryMode(BrokerEndpointManager endpoint) {
         super(endpoint);
         this.transporters = new ArrayList<>();
         final String upa = "UpaTransporter";

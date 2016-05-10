@@ -1,6 +1,8 @@
 package pt.upa.broker.ws;
 
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import javax.jws.WebService;
 
@@ -22,9 +24,14 @@ public class BrokerPort implements BrokerPortType {
 
     private BrokerMode mode;
 
-    public BrokerPort(BrokerEndpointManager endpoint, int mode) {
+    public BrokerPort(BrokerEndpointManager endpoint, int mode,
+                      Optional<String> backupServerURL) {
         if (mode == PRIMARY_MODE) {
-            this.mode = new PrimaryMode(endpoint);
+            try{
+                this.mode = new PrimaryMode(endpoint, backupServerURL.get());
+            } catch (NoSuchElementException e) {
+                throw new IllegalArgumentException("Must provide backupServerURL when starting in primary mode", e);
+            }
         } else if (mode == SECONDARY_MODE) {
             // this.mode = new SecondaryMode(endpoint);
         } else {
