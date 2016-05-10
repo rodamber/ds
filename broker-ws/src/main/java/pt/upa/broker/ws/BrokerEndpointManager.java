@@ -28,7 +28,7 @@ public class BrokerEndpointManager {
     private String wsURL = null;
 
     /** Port implementation */
-    private BrokerPort portImpl = new BrokerPort(this);
+    private BrokerPort portImpl = new BrokerPort(this, BrokerPort.PRIMARY_MODE);
 
     /** Obtain Port implementation */
     public BrokerPortType getPort() {
