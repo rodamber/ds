@@ -151,18 +151,26 @@ public class PrimaryMode extends BrokerMode {
 
     @Override
     public void updateViewState(String id, TransportStateView newState) {
-        // TODO
-    }
-
-    @Override
-    public void touch(String name) {
-        // TODO
+        super.updateViewState(id, newState);
+        if (this.backupServerWsURL.isPresent()) {
+            try {
+                new BrokerClient(this.backupServerWsURL.get()).updateViewState(id, newState);
+            } catch (BrokerClientException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
     public void addView(TransportView tv) {
         super.addView(tv);
-        // TODO
+        if (this.backupServerWsURL.isPresent()) {
+            try {
+                new BrokerClient(this.backupServerWsURL.get()).addView(tv);
+            } catch (BrokerClientException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
