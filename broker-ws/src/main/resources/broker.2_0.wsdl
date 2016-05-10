@@ -63,6 +63,14 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
       <xs:element name="pingResponse" type="tns:pingResponse" />
 
 
+      <xs:complexType name="touch">
+        <xs:sequence>
+          <xs:element name="name" type="xs:string" minOccurs="0" />
+        </xs:sequence>
+      </xs:complexType>
+      <xs:element name="touch" type="tns:touch" />
+
+
       <xs:complexType name="requestTransport">
         <xs:sequence>
           <xs:element name="origin" type="xs:string" minOccurs="0" />
@@ -173,6 +181,10 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
     <part name="parameters" element="tns:pingResponse" />
   </message>
 
+  <message name="touch">
+    <part name="parameters" element="tns:touch" />
+  </message>
+
   <message name="requestTransport">
     <part name="parameters" element="tns:requestTransport" />
   </message>
@@ -229,6 +241,11 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
              message="tns:ping" />
       <output wsam:Action="http://ws.broker.upa.pt/BrokerPort/pingResponse"
               message="tns:pingResponse" />
+    </operation>
+
+    <operation name="touch">
+      <input wsam:Action="http://ws.broker.upa.pt/BrokerPort/touchRequest"
+             message="tns:touch" />
     </operation>
 
     <operation name="requestTransport">
@@ -299,6 +316,13 @@ wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
       <output>
         <soap:body use="literal" />
       </output>
+    </operation>
+
+    <operation name="touch">
+      <soap:operation soapAction="" />
+      <input>
+        <soap:body use="literal" />
+      </input>
     </operation>
 
     <operation name="requestTransport">
