@@ -13,7 +13,7 @@ import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
 
 public class PrimaryMode extends BrokerMode {
-    private static final int IM_ALIVE_PING_INTERVAL = 5000;
+    private static final int IM_ALIVE_PING_INTERVAL = 5 * 1000;
     private static final String IM_ALIVE_PING_MSG = "Primary server is up and running";
 
     private Optional<String> backupServerWsURL = Optional.empty();
