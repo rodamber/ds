@@ -65,7 +65,10 @@ public class BackupMode extends BrokerMode {
     @Override
     public void addView(TransportView tv) {
         super.addView(tv);
-        System.out.println("Received new view from primary server with id " + tv.getId());
+        if (tv != null) {
+            System.out.println("Received new view from primary server with id " +
+                               tv.getId());
+        }
     }
 
     private void recover() {

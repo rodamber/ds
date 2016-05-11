@@ -21,6 +21,10 @@ public abstract class BrokerMode {
         this.views = new ArrayList<>();
     }
 
+    public Optional<TransportView> getViewById(String id) {
+        return views.stream().filter(v -> v.getId().equals(id)).findFirst();
+    }
+
     public List<TransportView> listTransports() {
         return this.views;
     }
@@ -40,7 +44,7 @@ public abstract class BrokerMode {
         throws UnknownTransportFault_Exception;
 
     public void updateViewState(String id, TransportStateView newState) {
-        this.views.stream()
+        views.stream()
             .filter(v -> v.getId().equals(id))
             .findFirst()
             .get()
@@ -51,8 +55,10 @@ public abstract class BrokerMode {
     }
 
     public void addView(TransportView tv) {
-        // RODRIGO:FIXME: Should throw an exception if view already exists.
-        this.views.add(tv);
+        // RODRIGO:FIXME: Should throw an exception if view already exists or is null.
+        if (tv != null) {
+            this.views.add(tv);
+        }
     }
 
     public abstract void shutdown();

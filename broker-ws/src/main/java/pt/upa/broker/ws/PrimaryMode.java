@@ -99,29 +99,23 @@ public class PrimaryMode extends BrokerMode {
             throw new UnknownTransportFault_Exception("Null or empty id", fault);
         }
 
-        TransportView view = null;
-        for (TransportView v : this.views) {
-            String vid = v.getId();
-            if (vid != null && vid.equals(id)) {
-                view = v;
-                break;
-            }
-        }
+        final Optional<TransportView> optView = getViewById(id);
 
-        if (view == null) {
+        if (!optView.isPresent()) {
             throw new UnknownTransportFault_Exception("Unknown transport", fault);
         }
+        final TransportView view = optView.get();
 
         if (view.getState().equals(TransportStateView.COMPLETED)) {
             return view;
         }
 
         try {
-            TransporterClient client =
+            final TransporterClient client =
                 new TransporterClient(port.getEndpoint().getUddiURL(),
                                       view.getTransporterCompany());
-            JobStateView jobState = client.jobStatus(id).getJobState();
-
+            final JobStateView jobState = client.jobStatus(id).getJobState();
+            // Get the most recent state for the view.
             if (jobState.equals(JobStateView.HEADING)) {
                 updateViewState(view.getId(), view.getState().HEADING);
             } else if (jobState.equals(JobStateView.ONGOING)) {
@@ -132,7 +126,6 @@ public class PrimaryMode extends BrokerMode {
         } catch (TransporterClientException e) {
             e.printStackTrace();
         }
-
         return view;
     }
 
@@ -183,6 +176,9 @@ public class PrimaryMode extends BrokerMode {
      */
     @Override
     public void addView(TransportView tv) {
+        if (tv == null) {
+            return;
+        }
         super.addView(tv);
         System.out.printf("Added new view to primary server with id %s%n", tv.getId());
 
