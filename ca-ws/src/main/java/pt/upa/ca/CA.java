@@ -6,5 +6,7 @@ import javax.jws.WebService;
 public interface CA {
 
 	String ping(String message);
+	
+	boolean verifyCertificate(String certificate);
 
 }

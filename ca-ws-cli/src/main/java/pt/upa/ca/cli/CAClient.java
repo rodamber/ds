@@ -2,6 +2,10 @@ package pt.upa.ca.cli;
 
 import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 
+import java.io.IOException;
+import java.nio.charset.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import javax.xml.ws.BindingProvider;
@@ -49,6 +53,23 @@ public class CAClient {
 		System.out.println("Remote call ...");
 		String result = port.ping("CA is alive!");
 		System.out.println(result);
+
+		System.out.println("Verifying certificate ...");
+		try{
+			String PEM = getFileContents("../transporter-ws/src/main/resources/cer/UpaTransporter2.cer", StandardCharsets.UTF_8);
+			boolean isValidCert = port.verifyCertificate(PEM);
+			System.out.println("Certificate is " + (isValidCert?"":"in") + "valid");
+		}
+		catch (IOException e) {
+			System.out.println("Failed to read local certificate");
+		}
+		
 	}
+	
+	public static String getFileContents(String path, Charset encoding) throws IOException {
+		  byte[] encoded = Files.readAllBytes(Paths.get(path));
+		  return new String(encoded, encoding);
+	}
+
 
 }
