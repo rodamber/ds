@@ -15,7 +15,7 @@ public abstract class BrokerMode {
     protected BrokerPort port;
     protected Hashtable<Integer, ViewRecord> records = new Hashtable<>();
 
-    private int maxCurrentKey = 0;
+    protected int maxCurrentKey = 0;
 
     public BrokerMode(BrokerPort port) {
         if (port == null) {
@@ -27,6 +27,8 @@ public abstract class BrokerMode {
 
     public void addViewRecord(ViewRecord re) {
         records.put(re.getKey(), re);
+        maxCurrentKey = re.getKey();
+
         System.out.printf("Added new record with key %d%n", re.getKey());
     }
 

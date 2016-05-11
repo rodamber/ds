@@ -16,8 +16,6 @@ public class PrimaryMode extends BrokerMode {
     private static final int IM_ALIVE_TOUCH_INTERVAL = 5 * 1000;
     private static final String IM_ALIVE_TOUCH_MSG = "I'm Alive";
 
-    private int maxCurrentKey = 0;
-
     private Optional<String> backupServerWsURL = Optional.empty();
 
     private List<String> transporters = new ArrayList<>();
