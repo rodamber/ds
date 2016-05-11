@@ -160,12 +160,9 @@ public class PrimaryMode extends BrokerMode {
     @Override
     public void updateViewState(int key, TransportStateView newState) {
         super.updateViewState(key, newState);
-        System.out.printf("Updated view with key %d to state %s%n", key, newState);
-
         if (backupServerWsURL.isPresent()) {
             try {
                 new BrokerClient(backupServerWsURL.get()).updateViewState(key, newState);
-                System.out.println("Updated view in the backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
             }
@@ -178,7 +175,7 @@ public class PrimaryMode extends BrokerMode {
     @Override
     public void addViewRecord(ViewRecord re) {
         super.addViewRecord(re);
-        System.out.printf("Added new view to primary server with key %d%n", re.key);
+        System.out.printf("Added new view to primary server with key %d%n", re.getKey());
 
         if (backupServerWsURL.isPresent()) {
             try {

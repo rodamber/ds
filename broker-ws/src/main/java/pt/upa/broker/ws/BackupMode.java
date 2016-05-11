@@ -51,6 +51,12 @@ public class BackupMode extends BrokerMode {
     }
 
     @Override
+    public void addViewRecord(ViewRecord re) {
+        super.addViewRecord(re);
+        maxCurrentKey = re.getKey();
+    }
+
+    @Override
     public void touch(String msg) {
         this.touched = true;
         System.out.println("Primary server says: \"" + msg + "\"");

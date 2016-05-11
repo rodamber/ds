@@ -18,20 +18,21 @@ public class BrokerApplication {
         }
 
         BrokerEndpointManager endpoint = null;
-        if (args.length == 1) {
-            final String wsURL = args[0];
+        if (args.length == 2) {
+            final String wsURL = args[1];
             final String mode    = BrokerPort.PRIMARY_MODE;
             endpoint = new BrokerEndpointManager(wsURL, mode, Optional.empty());
-        } else if (args.length >= 4) {
-            final String uddiURL     = args[0];
-            final String wsName      = args[1];
-            final String wsURL       = args[2];
-            final String mode        = args[3];
-            final String backupWsURL = args[4];
+        } else if (args.length >= 5) {
+            final String uddiURL     = args[1];
+            final String wsName      = args[2];
+            final String wsURL       = args[3];
+            final String mode        = args[4];
+            final String backupWsURL = args[5];
             endpoint = new BrokerEndpointManager(uddiURL, wsName, wsURL, mode,
                                                  Optional.ofNullable(backupWsURL));
-            endpoint.setVerbose(true);
         }
+
+        endpoint.setVerbose(Boolean.parseBoolean(args[0]));
 
         try {
             endpoint.start();

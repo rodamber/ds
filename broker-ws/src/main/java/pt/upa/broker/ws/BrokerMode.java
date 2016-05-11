@@ -27,8 +27,6 @@ public abstract class BrokerMode {
 
     public void addViewRecord(ViewRecord re) {
         records.put(re.getKey(), re);
-        maxCurrentKey = re.getKey();
-
         System.out.printf("Added new record with key %d%n", re.getKey());
     }
 
@@ -66,7 +64,7 @@ public abstract class BrokerMode {
         final ViewRecord re = getRecordByKey(key).get();
         re.view.setState(newState);
         System.out.printf("Updated record with key %d to state %s%n",
-                          re.key, re.view.getState());
+                          re.getKey(), re.view.getState());
     }
 
     public void touch(String name) {

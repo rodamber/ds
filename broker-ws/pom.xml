@@ -23,6 +23,8 @@
 
         <mainclass>pt.upa.broker.BrokerApplication</mainclass>
 
+        <verbose>true</verbose>
+
         <ws.url>http://localhost:8080/broker-ws/endpoint</ws.url>
         <backup.ws.url></backup.ws.url>
         <ws.mode>PRIMARY_MODE</ws.mode>
@@ -126,6 +128,7 @@
                     <killAfter>-1</killAfter>
                     <mainClass>${mainclass}</mainClass>
                     <arguments>
+                        <argument>${verbose}</argument>
                         <argument>${uddi.url}</argument>
                         <argument>${ws.name}</argument>
                         <argument>${ws.url}</argument>
