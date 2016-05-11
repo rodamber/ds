@@ -1,7 +1,8 @@
 package pt.upa.broker.ws;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -11,26 +12,34 @@ import java.util.stream.Stream;
  */
 public abstract class BrokerMode {
     protected BrokerPort port;
-    protected List<TransportView> views;
+    protected Hashtable<Long, TransportView> records = new Hashtable<>();
+
+    // Largest key currently in use
+    private Long maxCurrentKey = (long) 0;
 
     public BrokerMode(BrokerPort port) {
         if (port == null) {
             throw new IllegalArgumentException("port must not be null");
         }
         this.port = port;
-        this.views = new ArrayList<>();
+    }
+
+    public Optional<TransportView> getViewByKey(Long key) {
+        return Optional.ofNullable(records.get(key));
     }
 
     public Optional<TransportView> getViewById(String id) {
-        return views.stream().filter(v -> v.getId().equals(id)).findFirst();
+        return records.values().stream()
+            .filter(v -> v.getId().equals(id))
+            .findFirst();
     }
 
     public List<TransportView> listTransports() {
-        return this.views;
+        return new ArrayList<>(records.values());
     }
 
     public void clearTransports() {
-        this.views.clear();
+        records.clear();
     }
 
     public abstract String ping(String name);
@@ -44,20 +53,14 @@ public abstract class BrokerMode {
         throws UnknownTransportFault_Exception;
 
     public void updateViewState(String id, TransportStateView newState) {
-        views.stream()
-            .filter(v -> v.getId().equals(id))
-            .findFirst()
-            .get()
-            .setState(newState);
     }
 
     public void touch(String name) {
     }
 
     public void addView(TransportView tv) {
-        // RODRIGO:FIXME: Should throw an exception if view already exists or is null.
-        if (tv != null) {
-            this.views.add(tv);
+        if (!records.contains(tv)) {
+            records.put(maxCurrentKey++, tv);
         }
     }
 

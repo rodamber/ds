@@ -42,7 +42,7 @@ public class PrimaryMode extends BrokerMode {
 
     public PrimaryMode(BackupMode backupMode) {
         this(backupMode.port);
-        this.views = backupMode.views;
+        this.records = backupMode.records;
 
         try {
             port.getEndpoint().publishToUDDI();
