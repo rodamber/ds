@@ -86,8 +86,8 @@ public class BrokerPort implements BrokerPortType {
     }
 
     @Override
-    public void updateViewState(String id, TransportStateView newState) {
-        mode.updateViewState(id, newState);
+    public void updateViewState(Integer key, TransportStateView newState) {
+        mode.updateViewState(key, newState);
     }
 
     @Override
@@ -96,9 +96,8 @@ public class BrokerPort implements BrokerPortType {
     }
 
     @Override
-    public void addView(TransportView tv) {
-        Record<TransportView> re = new Record<>(tv);
-        mode.addRecord(re);
+    public void addViewRecord(ViewRecord record) {
+        mode.addViewRecord(record);
     }
 
     public void shutdown() {

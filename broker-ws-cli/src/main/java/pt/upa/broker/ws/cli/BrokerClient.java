@@ -123,8 +123,8 @@ public class BrokerClient implements BrokerPortType {
     }
 
     @Override
-    public void updateViewState(String id, TransportStateView newState) {
-        port.updateViewState(id, newState);
+    public void updateViewState(Integer key, TransportStateView newState) {
+        port.updateViewState(key, newState);
     }
 
     @Override
@@ -133,8 +133,8 @@ public class BrokerClient implements BrokerPortType {
     }
 
     @Override
-    public void addView(TransportView tv) {
-        port.addView(tv);
+    public void addViewRecord(ViewRecord re) {
+        port.addViewRecord(re);
     }
 
 }

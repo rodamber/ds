@@ -16,6 +16,8 @@ public class PrimaryMode extends BrokerMode {
     private static final int IM_ALIVE_TOUCH_INTERVAL = 5 * 1000;
     private static final String IM_ALIVE_TOUCH_MSG = "I'm Alive";
 
+    private int maxCurrentKey = 0;
+
     private Optional<String> backupServerWsURL = Optional.empty();
 
     private List<String> transporters = new ArrayList<>();
@@ -72,21 +74,21 @@ public class PrimaryMode extends BrokerMode {
         throws InvalidPriceFault_Exception, UnavailableTransportFault_Exception,
                UnavailableTransportPriceFault_Exception,
                UnknownLocationFault_Exception {
-        final TransportView view = addNewView(origin, destination);
-        updateViewState(view.getId(), view.getState().REQUESTED);
+        final ViewRecord record = newViewRecord(origin, destination);
+        updateViewState(record.getKey(), record.getView().getState().REQUESTED);
 
         List<JobView> allOffers = new ArrayList<>();
         JobView bestOffer = findBestOffer(origin, destination, price, allOffers);
 
-        assertHasOffer(view, bestOffer);
-        updateViewState(view.getId(), view.getState().BUDGETED);
+        assertHasOffer(record, bestOffer);
+        updateViewState(record.getKey(), record.getView().getState().BUDGETED);
 
-        assertGoodOffer(view, bestOffer, price);
-        updateViewInfo(view, bestOffer);
+        assertGoodOffer(record, bestOffer, price);
+        updateViewInfo(record.getView(), bestOffer);
 
-        acceptBestAndRejectAllOtherOffers(view, bestOffer, allOffers);
+        acceptBestAndRejectAllOtherOffers(record, bestOffer, allOffers);
 
-        return view.getId();
+        return record.getView().getId();
     }
 
     @Override
@@ -99,12 +101,12 @@ public class PrimaryMode extends BrokerMode {
             throw new UnknownTransportFault_Exception("Null or empty id", fault);
         }
 
-        final Optional<Record<TransportView>> optRecord = getRecordByViewId(id);
+        final Optional<ViewRecord> optRecord = getRecordByViewId(id);
 
         if (!optRecord.isPresent()) {
             throw new UnknownTransportFault_Exception("Unknown transport", fault);
         }
-        final TransportView view = optRecord.get().value;
+        final TransportView view = optRecord.get().getView();
 
         if (view.getState().equals(TransportStateView.COMPLETED)) {
             return view;
@@ -115,13 +117,14 @@ public class PrimaryMode extends BrokerMode {
                 new TransporterClient(port.getEndpoint().getUddiURL(),
                                       view.getTransporterCompany());
             final JobStateView jobState = client.jobStatus(id).getJobState();
+            final ViewRecord record = getRecordByViewId(view.getId()).get();
             // Get the most recent state for the view.
             if (jobState.equals(JobStateView.HEADING)) {
-                updateViewState(view.getId(), view.getState().HEADING);
+                updateViewState(record.getKey(), record.getView().getState().HEADING);
             } else if (jobState.equals(JobStateView.ONGOING)) {
-                updateViewState(view.getId(), view.getState().ONGOING);
+                updateViewState(record.getKey(), record.getView().getState().ONGOING);
             } else if (jobState.equals(JobStateView.COMPLETED)) {
-                updateViewState(view.getId(), view.getState().COMPLETED);
+                updateViewState(record.getKey(), record.getView().getState().COMPLETED);
             }
         } catch (TransporterClientException e) {
             e.printStackTrace();
@@ -157,13 +160,13 @@ public class PrimaryMode extends BrokerMode {
      * Update view state in the primary and backup servers (if applicable).
      */
     @Override
-    public void updateViewState(String id, TransportStateView newState) {
-        super.updateViewState(id, newState);
-        System.out.printf("Updated view with id %s to state %s%n", id, newState);
+    public void updateViewState(int key, TransportStateView newState) {
+        super.updateViewState(key, newState);
+        System.out.printf("Updated view with key %d to state %s%n", key, newState);
 
         if (backupServerWsURL.isPresent()) {
             try {
-                new BrokerClient(backupServerWsURL.get()).updateViewState(id, newState);
+                new BrokerClient(backupServerWsURL.get()).updateViewState(key, newState);
                 System.out.println("Updated view in the backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
@@ -175,13 +178,13 @@ public class PrimaryMode extends BrokerMode {
      * Adds new view to the primary and backup servers (if applicable).
      */
     @Override
-        public void addRecord(Record<TransportView> re) {
-        super.addRecord(re);
+    public void addViewRecord(ViewRecord re) {
+        super.addViewRecord(re);
         System.out.printf("Added new view to primary server with key %d%n", re.key);
 
         if (backupServerWsURL.isPresent()) {
             try {
-                new BrokerClient(this.backupServerWsURL.get()).addView(re.value);
+                new BrokerClient(backupServerWsURL.get()).addViewRecord(re);
                 System.out.println("Added view to backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
@@ -263,30 +266,35 @@ public class PrimaryMode extends BrokerMode {
         return bestOffer;
     }
 
-    private TransportView addNewView(String origin, String destination) {
+    private ViewRecord newViewRecord(String origin, String destination) {
         final TransportView view = new TransportView();
         view.setOrigin(origin);
         view.setDestination(destination);
-        addRecord(new Record<TransportView>(view));
-        return view;
+
+        ViewRecord record = new ViewRecord();
+        record.setKey(maxCurrentKey++);
+        record.setView(view);
+
+        addViewRecord(record);
+        return record;
     }
 
-    private void assertHasOffer(TransportView view, JobView offer)
+    private void assertHasOffer(ViewRecord record, JobView offer)
         throws UnavailableTransportFault_Exception {
         if (offer == null) { // Then there are no offers.
-            updateViewState(view.getId(), view.getState().FAILED);
+            updateViewState(record.getKey(), record.getView().getState().FAILED);
 
             UnavailableTransportFault fault = new UnavailableTransportFault();
-            fault.setOrigin(view.getOrigin());
-            fault.setDestination(view.getDestination());
+            fault.setOrigin(record.getView().getOrigin());
+            fault.setDestination(record.getView().getDestination());
             throw new UnavailableTransportFault_Exception("Unavailable Transport", fault);
         }
     }
 
-    private void assertGoodOffer(TransportView view, JobView offer, int price)
+    private void assertGoodOffer(ViewRecord record, JobView offer, int price)
         throws UnavailableTransportPriceFault_Exception {
         if (offer.getJobPrice() > price) { // Then not a good enough price.
-            updateViewState(view.getId(), view.getState().FAILED);
+            updateViewState(record.getKey(), record.getView().getState().FAILED);
 
             UnavailableTransportPriceFault fault = new UnavailableTransportPriceFault();
             fault.setBestPriceFound(offer.getJobPrice());
@@ -300,7 +308,7 @@ public class PrimaryMode extends BrokerMode {
         view.setTransporterCompany(offer.getCompanyName());
     }
 
-    private void acceptBestAndRejectAllOtherOffers(TransportView view,
+    private void acceptBestAndRejectAllOtherOffers(ViewRecord record,
                                                    JobView bestOffer,
                                                    List<JobView> allOffers) {
         for (JobView job : allOffers) {
@@ -311,7 +319,7 @@ public class PrimaryMode extends BrokerMode {
                 boolean accept = bestOffer.getCompanyName().equals(job.getCompanyName());
                 client.decideJob(job.getJobIdentifier(), accept);
                 if (accept) {
-                    updateViewState(view.getId(), view.getState().BOOKED);
+                    updateViewState(record.getKey(), record.getView().getState().BOOKED);
                 }
             } catch (TransporterClientException | BadJobFault_Exception e) {
                 e.printStackTrace();

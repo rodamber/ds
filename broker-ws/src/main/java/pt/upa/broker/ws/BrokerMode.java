@@ -13,7 +13,9 @@ import static java.util.stream.Collectors.toList;
  */
 public abstract class BrokerMode {
     protected BrokerPort port;
-    protected Hashtable<Long, Record<TransportView>> records = new Hashtable<>();
+    protected Hashtable<Integer, ViewRecord> records = new Hashtable<>();
+
+    private int maxCurrentKey = 0;
 
     public BrokerMode(BrokerPort port) {
         if (port == null) {
@@ -23,24 +25,24 @@ public abstract class BrokerMode {
         System.out.println(this);
     }
 
-    public void addRecord(Record<TransportView> re) {
-        records.put(re.key, re);
-        System.out.printf("Added new record with key %d%n", re.key);
+    public void addViewRecord(ViewRecord re) {
+        records.put(re.getKey(), re);
+        System.out.printf("Added new record with key %d%n", re.getKey());
     }
 
-    public Optional<Record<TransportView>> getRecordByKey(long key) {
+    public Optional<ViewRecord> getRecordByKey(int key) {
         return Optional.ofNullable(records.get(key));
     }
 
-    public Optional<Record<TransportView>> getRecordByViewId(String id) {
+    public Optional<ViewRecord> getRecordByViewId(String id) {
         return records.values().stream()
-            .filter(re -> re.value.getId().equals(id))
+            .filter(re -> re.view.getId().equals(id))
             .findFirst();
     }
 
     public List<TransportView> listTransports() {
         return records.values().stream()
-            .map(re -> re.value)
+            .map(re -> re.view)
             .collect(toList());
     }
 
@@ -58,11 +60,11 @@ public abstract class BrokerMode {
     public abstract TransportView viewTransport(String id)
         throws UnknownTransportFault_Exception;
 
-    public void updateViewState(String id, TransportStateView newState) {
-        final Record<TransportView> re = getRecordByViewId(id).get();
-        re.value.setState(newState);
-        System.out.printf("Updated re with key %d to state %s%n",
-                          re.key, re.value.getState());
+    public void updateViewState(int key, TransportStateView newState) {
+        final ViewRecord re = getRecordByKey(key).get();
+        re.view.setState(newState);
+        System.out.printf("Updated record with key %d to state %s%n",
+                          re.key, re.view.getState());
     }
 
     public void touch(String name) {
