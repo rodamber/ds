@@ -51,24 +51,9 @@ public class BackupMode extends BrokerMode {
     }
 
     @Override
-    public void updateViewState(String id, TransportStateView newState) {
-        super.updateViewState(id, newState);
-        System.out.println("Received new view from primary server");
-    }
-
-    @Override
     public void touch(String msg) {
         this.touched = true;
         System.out.println("Primary server says: \"" + msg + "\"");
-    }
-
-    @Override
-    public void addView(TransportView tv) {
-        super.addView(tv);
-        if (tv != null) {
-            System.out.println("Received new view from primary server with id " +
-                               tv.getId());
-        }
     }
 
     private void recover() {
@@ -90,6 +75,11 @@ public class BackupMode extends BrokerMode {
     public void shutdown() {
         timer.cancel();
         timer.purge();
+    }
+
+    @Override
+    public String toString() {
+        return BrokerPort.BACKUP_MODE;
     }
 
 }

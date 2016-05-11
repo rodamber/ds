@@ -46,6 +46,10 @@ public class BrokerPort implements BrokerPortType {
         return this.endpoint;
     }
 
+    public BrokerMode getServerMode() {
+        return mode;
+    }
+
     public void setServerMode(BrokerMode mode) {
         this.mode = mode;
     }
@@ -87,13 +91,14 @@ public class BrokerPort implements BrokerPortType {
     }
 
     @Override
-    public void addView(TransportView tv) {
-        mode.addView(tv);
+    public void touch(String name) {
+        mode.touch(name);
     }
 
     @Override
-    public void touch(String name) {
-        mode.touch(name);
+    public void addView(TransportView tv) {
+        Record<TransportView> re = new Record<>(tv);
+        mode.addRecord(re);
     }
 
     public void shutdown() {

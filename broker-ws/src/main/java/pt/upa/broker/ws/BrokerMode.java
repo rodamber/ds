@@ -5,6 +5,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import static java.util.stream.Collectors.toList;
 
 
 /**
@@ -12,30 +13,35 @@ import java.util.stream.Stream;
  */
 public abstract class BrokerMode {
     protected BrokerPort port;
-    protected Hashtable<Long, TransportView> records = new Hashtable<>();
-
-    // Largest key currently in use
-    private Long maxCurrentKey = (long) 0;
+    protected Hashtable<Long, Record<TransportView>> records = new Hashtable<>();
 
     public BrokerMode(BrokerPort port) {
         if (port == null) {
             throw new IllegalArgumentException("port must not be null");
         }
         this.port = port;
+        System.out.println(this);
     }
 
-    public Optional<TransportView> getViewByKey(Long key) {
+    public void addRecord(Record<TransportView> re) {
+        records.put(re.key, re);
+        System.out.printf("Added new record with key %d%n", re.key);
+    }
+
+    public Optional<Record<TransportView>> getRecordByKey(long key) {
         return Optional.ofNullable(records.get(key));
     }
 
-    public Optional<TransportView> getViewById(String id) {
+    public Optional<Record<TransportView>> getRecordByViewId(String id) {
         return records.values().stream()
-            .filter(v -> v.getId().equals(id))
+            .filter(re -> re.value.getId().equals(id))
             .findFirst();
     }
 
     public List<TransportView> listTransports() {
-        return new ArrayList<>(records.values());
+        return records.values().stream()
+            .map(re -> re.value)
+            .collect(toList());
     }
 
     public void clearTransports() {
@@ -53,15 +59,13 @@ public abstract class BrokerMode {
         throws UnknownTransportFault_Exception;
 
     public void updateViewState(String id, TransportStateView newState) {
+        final Record<TransportView> re = getRecordByViewId(id).get();
+        re.value.setState(newState);
+        System.out.printf("Updated re with key %d to state %s%n",
+                          re.key, re.value.getState());
     }
 
     public void touch(String name) {
-    }
-
-    public void addView(TransportView tv) {
-        if (!records.contains(tv)) {
-            records.put(maxCurrentKey++, tv);
-        }
     }
 
     public abstract void shutdown();

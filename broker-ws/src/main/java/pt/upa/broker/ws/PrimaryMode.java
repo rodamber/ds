@@ -99,12 +99,12 @@ public class PrimaryMode extends BrokerMode {
             throw new UnknownTransportFault_Exception("Null or empty id", fault);
         }
 
-        final Optional<TransportView> optView = getViewById(id);
+        final Optional<Record<TransportView>> optRecord = getRecordByViewId(id);
 
-        if (!optView.isPresent()) {
+        if (!optRecord.isPresent()) {
             throw new UnknownTransportFault_Exception("Unknown transport", fault);
         }
-        final TransportView view = optView.get();
+        final TransportView view = optRecord.get().value;
 
         if (view.getState().equals(TransportStateView.COMPLETED)) {
             return view;
@@ -175,16 +175,13 @@ public class PrimaryMode extends BrokerMode {
      * Adds new view to the primary and backup servers (if applicable).
      */
     @Override
-    public void addView(TransportView tv) {
-        if (tv == null) {
-            return;
-        }
-        super.addView(tv);
-        System.out.printf("Added new view to primary server with id %s%n", tv.getId());
+        public void addRecord(Record<TransportView> re) {
+        super.addRecord(re);
+        System.out.printf("Added new view to primary server with key %d%n", re.key);
 
-        if (this.backupServerWsURL.isPresent()) {
+        if (backupServerWsURL.isPresent()) {
             try {
-                new BrokerClient(this.backupServerWsURL.get()).addView(tv);
+                new BrokerClient(this.backupServerWsURL.get()).addView(re.value);
                 System.out.println("Added view to backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
@@ -223,6 +220,11 @@ public class PrimaryMode extends BrokerMode {
     public void shutdown() {
         timer.cancel();
         timer.purge();
+    }
+
+    @Override
+    public String toString() {
+        return BrokerPort.PRIMARY_MODE;
     }
 
     /****************************** Helpers ***********************************/
@@ -265,7 +267,7 @@ public class PrimaryMode extends BrokerMode {
         final TransportView view = new TransportView();
         view.setOrigin(origin);
         view.setDestination(destination);
-        addView(view);
+        addRecord(new Record<TransportView>(view));
         return view;
     }
 
