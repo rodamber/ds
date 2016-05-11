@@ -73,13 +73,13 @@ public class PrimaryMode extends BrokerMode {
                UnavailableTransportPriceFault_Exception,
                UnknownLocationFault_Exception {
         final TransportView view = addNewView(origin, destination);
-        view.setState(view.getState().REQUESTED);
+        updateViewState(view.getId(), view.getState().REQUESTED);
 
         List<JobView> allOffers = new ArrayList<>();
         JobView bestOffer = findBestOffer(origin, destination, price, allOffers);
 
         assertHasOffer(view, bestOffer);
-        view.setState(view.getState().BUDGETED);
+        updateViewState(view.getId(), view.getState().BUDGETED);
 
         assertGoodOffer(view, bestOffer, price);
         updateViewInfo(view, bestOffer);
@@ -91,8 +91,7 @@ public class PrimaryMode extends BrokerMode {
 
     @Override
     public TransportView viewTransport(String id)
-        throws UnknownTransportFault_Exception
-    {
+        throws UnknownTransportFault_Exception {
         UnknownTransportFault fault = new UnknownTransportFault();
         fault.setId(id);
 
@@ -124,11 +123,11 @@ public class PrimaryMode extends BrokerMode {
             JobStateView jobState = client.jobStatus(id).getJobState();
 
             if (jobState.equals(JobStateView.HEADING)) {
-                view.setState(view.getState().HEADING);
+                updateViewState(view.getId(), view.getState().HEADING);
             } else if (jobState.equals(JobStateView.ONGOING)) {
-                view.setState(view.getState().ONGOING);
+                updateViewState(view.getId(), view.getState().ONGOING);
             } else if (jobState.equals(JobStateView.COMPLETED)) {
-                view.setState(view.getState().COMPLETED);
+                updateViewState(view.getId(), view.getState().COMPLETED);
             }
         } catch (TransporterClientException e) {
             e.printStackTrace();
@@ -139,7 +138,17 @@ public class PrimaryMode extends BrokerMode {
 
     @Override
     public void clearTransports() {
+        // Clear primary server state
         super.clearTransports();
+        // Clear backup server state
+        if (backupServerWsURL.isPresent()) {
+            try {
+                new BrokerClient(backupServerWsURL.get()).clearTransports();
+            } catch (BrokerClientException e) {
+                e.printStackTrace();
+            }
+        }
+        // Clear transporters state
         for (final String transporterName: this.transporters) {
             try {
                 TransporterClient client =
@@ -151,30 +160,46 @@ public class PrimaryMode extends BrokerMode {
         }
     }
 
+    /**
+     * Update view state in the primary and backup servers (if applicable).
+     */
     @Override
     public void updateViewState(String id, TransportStateView newState) {
         super.updateViewState(id, newState);
-        if (this.backupServerWsURL.isPresent()) {
+        System.out.printf("Updated view with id %s to state %s%n", id, newState);
+
+        if (backupServerWsURL.isPresent()) {
             try {
-                new BrokerClient(this.backupServerWsURL.get()).updateViewState(id, newState);
+                new BrokerClient(backupServerWsURL.get()).updateViewState(id, newState);
+                System.out.println("Updated view in the backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    /**
+     * Adds new view to the primary and backup servers (if applicable).
+     */
     @Override
     public void addView(TransportView tv) {
         super.addView(tv);
+        System.out.printf("Added new view to primary server with id %s%n", tv.getId());
+
         if (this.backupServerWsURL.isPresent()) {
             try {
                 new BrokerClient(this.backupServerWsURL.get()).addView(tv);
+                System.out.println("Added view to backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    /**
+     *  Notifies (touches) the backup server that the primary is up and
+     *  schedules another touch.
+     */
     private void touchBackupServer(String msg, int interval) {
         if (!backupServerWsURL.isPresent()) {
             System.out.println("No backup server URL was given");
@@ -251,7 +276,7 @@ public class PrimaryMode extends BrokerMode {
     private void assertHasOffer(TransportView view, JobView offer)
         throws UnavailableTransportFault_Exception {
         if (offer == null) { // Then there are no offers.
-            view.setState(view.getState().FAILED);
+            updateViewState(view.getId(), view.getState().FAILED);
 
             UnavailableTransportFault fault = new UnavailableTransportFault();
             fault.setOrigin(view.getOrigin());
@@ -263,7 +288,7 @@ public class PrimaryMode extends BrokerMode {
     private void assertGoodOffer(TransportView view, JobView offer, int price)
         throws UnavailableTransportPriceFault_Exception {
         if (offer.getJobPrice() > price) { // Then not a good enough price.
-            view.setState(view.getState().FAILED);
+            updateViewState(view.getId(), view.getState().FAILED);
 
             UnavailableTransportPriceFault fault = new UnavailableTransportPriceFault();
             fault.setBestPriceFound(offer.getJobPrice());
@@ -288,7 +313,7 @@ public class PrimaryMode extends BrokerMode {
                 boolean accept = bestOffer.getCompanyName().equals(job.getCompanyName());
                 client.decideJob(job.getJobIdentifier(), accept);
                 if (accept) {
-                    view.setState(view.getState().BOOKED);
+                    updateViewState(view.getId(), view.getState().BOOKED);
                 }
             } catch (TransporterClientException | BadJobFault_Exception e) {
                 e.printStackTrace();
