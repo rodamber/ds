@@ -2,10 +2,13 @@ package pt.upa.broker.ws.cli;
 
 import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 
+import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
-import javax.xml.ws.BindingProvider;
+import javax.xml.ws.*;
+import static javax.xml.ws.BindingProvider.ENDPOINT_ADDRESS_PROPERTY;
 
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
 import pt.upa.broker.ws.*;
@@ -39,9 +42,27 @@ public class BrokerClient implements BrokerPortType {
         this.verbose = verbose;
     }
 
+    private void init() {
+        int receiveTimeout = 6000;
+
+        // The receive timeout property has alternative names
+        // Again, set them all to avoid compability issues
+        final List<String> RECV_TIME_PROPS = new ArrayList<String>();
+        RECV_TIME_PROPS.add("com.sun.xml.ws.request.timeout");
+        RECV_TIME_PROPS.add("com.sun.xml.internal.ws.request.timeout");
+        RECV_TIME_PROPS.add("javax.xml.ws.client.receiveTimeout");
+
+        // Set timeout until the response is received (unit is milliseconds; 0 means infinite)
+        for (String propName : RECV_TIME_PROPS) {
+            BindingProvider bindingProvider = (BindingProvider) port;
+            bindingProvider.getRequestContext().put(propName, receiveTimeout);
+        }
+    }
+
     public BrokerClient(String wsURL) throws BrokerClientException {
         this.wsURL = wsURL;
         createStub();
+        init();
     }
 
     public BrokerClient(String uddiURL, String wsName) throws BrokerClientException {
@@ -49,6 +70,7 @@ public class BrokerClient implements BrokerPortType {
         this.wsName = wsName;
         uddiLookup();
         createStub();
+        init();
     }
 
     private void uddiLookup() throws BrokerClientException {
@@ -97,34 +119,62 @@ public class BrokerClient implements BrokerPortType {
 
     @Override
     public String ping(String name) {
-        return port.ping(name);
+        try {
+            return port.ping(name);
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public String requestTransport(String origin, String destination, int price)
         throws InvalidPriceFault_Exception, UnavailableTransportFault_Exception,
                UnavailableTransportPriceFault_Exception, UnknownLocationFault_Exception {
-        return port.requestTransport(origin, destination, price);
+        try {
+            return port.requestTransport(origin, destination, price);
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public TransportView viewTransport(String id) throws UnknownTransportFault_Exception {
-        return port.viewTransport(id);
+        try {
+            return port.viewTransport(id);
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public List<TransportView> listTransports() {
-        return port.listTransports();
+        try {
+            return port.listTransports();
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
+        return null;
     }
 
     @Override
     public void clearTransports() {
-        port.clearTransports();
+        try {
+            port.clearTransports();
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
     }
 
     @Override
     public void updateViewState(Integer key, TransportStateView newState) {
-        port.updateViewState(key, newState);
+        try {
+            port.updateViewState(key, newState);
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
     }
 
     @Override
@@ -134,7 +184,11 @@ public class BrokerClient implements BrokerPortType {
 
     @Override
     public void addViewRecord(ViewRecord re) {
-        port.addViewRecord(re);
+        try {
+            port.addViewRecord(re);
+        } catch(WebServiceException wse) {
+            wse.printStackTrace();
+        }
     }
 
 }
