@@ -32,7 +32,7 @@ import javax.xml.registry.infomodel.ServiceBinding;
  * To achieve greater control of the underlying registry, the JAX-R API should
  * be used instead.<br />
  * <br />
- *
+ * 
  * @author Miguel Pardal
  */
 public class UDDINaming {
@@ -72,8 +72,9 @@ public class UDDINaming {
 	//
 
 	/**
-	 * Create an UDDI client configured to access the specified URL.
-	 * The connection to the server is managed automatically (auto-connect option is enabled).
+	 * Create an UDDI client configured to access the specified URL. The
+	 * connection to the server is managed automatically (auto-connect option is
+	 * enabled).
 	 */
 	public UDDINaming(String uddiURL) throws JAXRException {
 		this(uddiURL, true);
@@ -84,8 +85,11 @@ public class UDDINaming {
 	 * specified auto-connect option.
 	 */
 	public UDDINaming(String uddiURL, boolean autoConnect) throws JAXRException {
+		// UDDI URL validation
+		uddiURL = validateAndTrimStringArg(uddiURL, "UDDI URL");
 		if (!uddiURL.startsWith("http"))
 			throw new IllegalArgumentException("Please provide UDDI server URL in http://host:port format!");
+
 		this.autoConnectFlag = autoConnect;
 
 		try {
@@ -98,8 +102,7 @@ public class UDDINaming {
 				if (traceFlag)
 					e.printStackTrace(System.out);
 			}
-
-			// try factory method from scout
+			// try factory method from scout implementation
 			System.setProperty("javax.xml.registry.ConnectionFactoryClass",
 					"org.apache.ws.scout.registry.ConnectionFactoryImpl");
 			connFactory = ConnectionFactory.newInstance();
@@ -143,11 +146,14 @@ public class UDDINaming {
 
 	/** Set user name */
 	public void setUsername(String username) {
+		username = validateAndTrimStringArg(username, "User name");
 		this.username = username;
 	}
 
 	/** Set password */
 	public void setPassword(char[] password) {
+		if (password == null)
+			throw new IllegalArgumentException("Password cannot be null!");
 		this.password = password;
 	}
 
@@ -161,12 +167,13 @@ public class UDDINaming {
 		this.debugFlag = debugFlag;
 	}
 
-
 	/**
-	 * Main method expects two arguments: - UDDI server URL - Organization name<br />
+	 * Main method expects two arguments: - UDDI server URL - Organization name
+	 * <br />
 	 * <br />
 	 * Main performs a lookup on UDDI server using the organization name. <br />
-	 * If a registration is found, the service URL is printed to standard output.<br />
+	 * If a registration is found, the service URL is printed to standard
+	 * output.<br />
 	 * If not, nothing is printed.<br />
 	 * <br />
 	 * Standard error is used to print error messages.<br />
@@ -202,7 +209,6 @@ public class UDDINaming {
 
 	/** Connect to UDDI server */
 	public void connect() throws JAXRException {
-
 		conn = connFactory.createConnection();
 
 		// Define credentials
@@ -263,9 +269,13 @@ public class UDDINaming {
 	// Outer methods manage connection and call internal operations
 	//
 
-	/** Returns a collection of records bound to the name.
-	 * The provided name can include wild-card characters - % or ? - to match multiple records.  */
+	/**
+	 * Returns a collection of records bound to the name. The provided name can
+	 * include wild-card characters - % or ? - to match multiple records.
+	 */
 	public Collection<UDDIRecord> listRecords(String orgName) throws JAXRException {
+		orgName = validateAndTrimStringArg(orgName, "Organization name");
+
 		autoConnect();
 		try {
 			return queryAll(orgName);
@@ -274,9 +284,13 @@ public class UDDINaming {
 		}
 	}
 
-	/** Returns a collection of URLs bound to the name.
-	 * The provided name can include wild-card characters - % or ? - to match multiple records.  */
+	/**
+	 * Returns a collection of URLs bound to the name. The provided name can
+	 * include wild-card characters - % or ? - to match multiple records.
+	 */
 	public Collection<String> list(String orgName) throws JAXRException {
+		orgName = validateAndTrimStringArg(orgName, "Organization name");
+
 		Collection<UDDIRecord> records = listRecords(orgName);
 		List<String> urls = new ArrayList<>();
 		for (UDDIRecord record : records)
@@ -286,6 +300,8 @@ public class UDDINaming {
 
 	/** Returns the first record associated with the specified name */
 	public UDDIRecord lookupRecord(String orgName) throws JAXRException {
+		orgName = validateAndTrimStringArg(orgName, "Organization name");
+
 		autoConnect();
 		try {
 			return query(orgName);
@@ -296,9 +312,14 @@ public class UDDINaming {
 
 	/** Returns the first URL associated with the specified name */
 	public String lookup(String orgName) throws JAXRException {
+		orgName = validateAndTrimStringArg(orgName, "Organization name");
+
 		try {
 			UDDIRecord record = lookupRecord(orgName);
-			return record.getUrl();
+			if (record == null)
+				return null;
+			else
+				return record.getUrl();
 		} catch (Exception e) {
 			System.out.println(e);
 			e.printStackTrace();
@@ -308,6 +329,8 @@ public class UDDINaming {
 
 	/** Destroys the binding for the specified name */
 	public void unbind(String orgName) throws JAXRException {
+		orgName = validateAndTrimStringArg(orgName, "Organization name");
+
 		autoConnect();
 		try {
 			deleteAll(orgName);
@@ -325,6 +348,9 @@ public class UDDINaming {
 
 	/** Binds the specified record containing a name and a URL */
 	public void bind(UDDIRecord record) throws JAXRException {
+		if (record == null)
+			throw new IllegalArgumentException("UDDI Record cannot be null!");
+
 		autoConnect();
 		try {
 			publish(record);
@@ -342,6 +368,9 @@ public class UDDINaming {
 
 	/** Rebinds the specified record containing a name and a new URL */
 	public void rebind(UDDIRecord record) throws JAXRException {
+		if (record == null)
+			throw new IllegalArgumentException("UDDI Record cannot be null!");
+
 		autoConnect();
 		try {
 			deleteAll(record.getOrgName());
@@ -356,6 +385,17 @@ public class UDDINaming {
 	// private implementation
 	//
 
+	/** helper method to validate string and trim its value */
+	private String validateAndTrimStringArg(String string, String name) {
+		if (string == null)
+			throw new IllegalArgumentException(name + " cannot be null!");
+		string = string.trim();
+		if (string.length() == 0)
+			throw new IllegalArgumentException(name + " cannot be empty!");
+		return string;
+	}
+
+	/** query UDDI and return a list of records */
 	private List<UDDIRecord> queryAll(String orgName) throws JAXRException {
 		List<UDDIRecord> records = new ArrayList<UDDIRecord>();
 
@@ -402,6 +442,7 @@ public class UDDINaming {
 		return records;
 	}
 
+	/** query UDDI and return first record */
 	private UDDIRecord query(String orgName) throws JAXRException {
 		List<UDDIRecord> listResult = queryAll(orgName);
 		int listResultSize = listResult.size();
@@ -419,6 +460,7 @@ public class UDDINaming {
 		}
 	}
 
+	/** delete all records that match organization name from UDDI */
 	private boolean deleteAll(String orgName) throws JAXRException {
 
 		Collection<String> findQualifiers = new ArrayList<String>();
@@ -458,6 +500,10 @@ public class UDDINaming {
 		}
 	}
 
+	/**
+	 * publish a record to UDDI with derived service name and binding
+	 * description
+	 */
 	private boolean publish(UDDIRecord record) throws JAXRException {
 		// derive other names from organization name
 		String serviceName = record.getOrgName() + " service";
@@ -471,6 +517,10 @@ public class UDDINaming {
 		return publish(record.getOrgName(), serviceName, bindingDesc, record.getUrl());
 	}
 
+	/**
+	 * publish a record to UDDI with provided service name and binding
+	 * description
+	 */
 	private boolean publish(String orgName, String serviceName, String bindingDescription, String bindingURL)
 			throws JAXRException {
 

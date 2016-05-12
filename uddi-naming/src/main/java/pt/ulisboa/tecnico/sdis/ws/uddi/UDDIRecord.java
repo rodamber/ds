@@ -23,8 +23,10 @@ public class UDDIRecord {
 	 * Constructs a UDDI record with the provided organization name and service
 	 * URL
 	 * 
-	 * @param orgName The name of the organization
-	 * @param url The service address URL
+	 * @param orgName
+	 *            The name of the organization
+	 * @param url
+	 *            The service address URL
 	 */
 	public UDDIRecord(String orgName, String url) {
 		super();
