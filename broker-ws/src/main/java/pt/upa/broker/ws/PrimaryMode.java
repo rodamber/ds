@@ -104,30 +104,29 @@ public class PrimaryMode extends BrokerMode {
         if (!optRecord.isPresent()) {
             throw new UnknownTransportFault_Exception("Unknown transport", fault);
         }
-        final TransportView view = optRecord.get().getView();
+        final ViewRecord record = optRecord.get();
 
-        if (view.getState().equals(TransportStateView.COMPLETED)) {
-            return view;
+        if (record.getView().getState().equals(TransportStateView.COMPLETED)) {
+            return record.getView();
         }
 
         try {
             final TransporterClient client =
                 new TransporterClient(port.getEndpoint().getUddiURL(),
-                                      view.getTransporterCompany());
+                                      record.getView().getTransporterCompany());
             final JobStateView jobState = client.jobStatus(id).getJobState();
-            final ViewRecord record = getRecordByViewId(view.getId()).get();
             // Get the most recent state for the view.
             if (jobState.equals(JobStateView.HEADING)) {
-                updateViewState(record.getKey(), record.getView().getState().HEADING);
+                updateViewState(record.getKey(), TransportStateView.HEADING);
             } else if (jobState.equals(JobStateView.ONGOING)) {
-                updateViewState(record.getKey(), record.getView().getState().ONGOING);
+                updateViewState(record.getKey(), TransportStateView.ONGOING);
             } else if (jobState.equals(JobStateView.COMPLETED)) {
-                updateViewState(record.getKey(), record.getView().getState().COMPLETED);
+                updateViewState(record.getKey(), TransportStateView.COMPLETED);
             }
         } catch (TransporterClientException e) {
             e.printStackTrace();
         }
-        return view;
+        return record.getView();
     }
 
     @Override
