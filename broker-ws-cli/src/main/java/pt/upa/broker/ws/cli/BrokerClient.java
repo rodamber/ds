@@ -160,7 +160,15 @@ public class BrokerClient implements BrokerPortType {
             try {
                 return port.listTransports();
             } catch(WebServiceException wse) {
-                wse.printStackTrace();
+                if (i == MAX_TRIES) {
+                    wse.printStackTrace();
+                } else {
+                    try {
+                        Thread.sleep(2 * 1000);
+                    } catch (InterruptedException ie) {
+                        ie.printStackTrace();
+                    }
+                }
             }
         return null;
     }
