@@ -41,9 +41,18 @@ public abstract class BrokerMode {
     }
 
     public List<TransportView> listTransports() {
-        return records.values().stream()
-            .map(re -> re.view)
-            .collect(toList());
+        final List<TransportView> views =
+            records.values().stream().map(re -> re.view).collect(toList());
+        for (TransportView tv : views) {
+            try {
+                viewTransport(tv.getId());
+            } catch (UnknownTransportFault_Exception e) {
+                if (tv.getId() != null) {
+                    e.printStackTrace();
+                } // else ignore
+            }
+        }
+        return views;
     }
 
     public void clearTransports() {

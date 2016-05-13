@@ -1,16 +1,12 @@
 package pt.upa.broker.ws;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
+import static java.util.stream.Collectors.toList;
 
 import pt.upa.broker.ws.cli.*;
-
 import pt.upa.transporter.ws.*;
 import pt.upa.transporter.ws.cli.*;
+import pt.ulisboa.tecnico.sdis.ws.uddi.*;
 
 public class PrimaryMode extends BrokerMode {
     private static final int IM_ALIVE_TOUCH_INTERVAL = 5 * 1000;
@@ -54,14 +50,15 @@ public class PrimaryMode extends BrokerMode {
     @Override
     public String ping(String name)
     {
+
+        Collection<UDDIRecord> records = getAllTransporters();
         String msg = "";
-        for (final String transp : this.transporters) {
+        for (final UDDIRecord record : records) {
             try {
-                TransporterClient client =
-                    new TransporterClient(port.getEndpoint().getUddiURL(), transp);
-                msg += transp + " - " + client.ping(name);
+                TransporterClient client = new TransporterClient(record.getUrl());
+                msg += record.getOrgName() + " - " + client.ping(name);
             } catch (TransporterClientException e) {
-                msg += transp + " - " + e.getMessage();
+                msg += record.getOrgName() + " - " + e.getMessage();
             }
         }
         return "Ping: " + msg;
@@ -141,12 +138,12 @@ public class PrimaryMode extends BrokerMode {
                 e.printStackTrace();
             }
         }
+
         // Clear transporters state
-        for (final String transporterName: this.transporters) {
+        Collection<UDDIRecord> records = getAllTransporters();
+        for (final UDDIRecord record : records) {
             try {
-                TransporterClient client =
-                    new TransporterClient(port.getEndpoint().getUddiURL(), transporterName);
-                client.clearJobs();
+                new TransporterClient(record.getUrl()).clearJobs();
             } catch (TransporterClientException e) {
                 e.printStackTrace();
             }
@@ -229,11 +226,14 @@ public class PrimaryMode extends BrokerMode {
     private JobView findBestOffer(String origin, String destination, int price,
                                   List<JobView> allOffers)
         throws UnknownLocationFault_Exception, InvalidPriceFault_Exception {
+
+        Collection<UDDIRecord> records = getAllTransporters();
         JobView bestOffer = null;
-        for (final String transporterName: this.transporters) {
+
+        for (final UDDIRecord record : records) {
             try {
                 final TransporterClient client =
-                    new TransporterClient(port.getEndpoint().getUddiURL(), transporterName);
+                    new TransporterClient(record.getUrl());
                 final JobView offer =
                     client.requestJob(origin, destination, price);
                 if (offer == null) {
@@ -320,5 +320,18 @@ public class PrimaryMode extends BrokerMode {
             }
         }
     }
+
+    private Collection<UDDIRecord> getAllTransporters() {
+        UDDINaming naming = null;
+        Collection<UDDIRecord> records = null;
+        try {
+            naming = new UDDINaming(port.getEndpoint().getUddiURL());
+            records = naming.listRecords("UpaTransporter%");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return records;
+    }
+
 
 }
