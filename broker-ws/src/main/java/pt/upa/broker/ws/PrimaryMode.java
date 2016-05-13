@@ -9,7 +9,7 @@ import pt.upa.transporter.ws.cli.*;
 import pt.ulisboa.tecnico.sdis.ws.uddi.*;
 
 public class PrimaryMode extends BrokerMode {
-    private static final int IM_ALIVE_TOUCH_INTERVAL = 5 * 1000;
+    private static final int IM_ALIVE_TOUCH_INTERVAL = 2 * 1000;
     private static final String IM_ALIVE_TOUCH_MSG = "I'm Alive";
 
     private Optional<String> backupServerWsURL = Optional.empty();
@@ -116,18 +116,22 @@ public class PrimaryMode extends BrokerMode {
                 new TransporterClient(port.getEndpoint().getUddiURL(),
                                       record.getView().getTransporterCompany());
             final JobStateView jobState = client.jobStatus(id).getJobState();
+            final TransportView view = record.getView();
+
             // Get the most recent state for the view.
-            if (jobState.equals(JobStateView.HEADING)) {
-                record.getView().setState(TransportStateView.HEADING);
-            } else if (jobState.equals(JobStateView.ONGOING)) {
-                record.getView().setState(TransportStateView.ONGOING);
-            } else if (jobState.equals(JobStateView.COMPLETED)) {
-                record.getView().setState(TransportStateView.COMPLETED);
+            if (!jobState.toString().equals(view.getState().toString())) {
+                if (jobState.equals(JobStateView.HEADING)) {
+                    view.setState(TransportStateView.HEADING);
+                } else if (jobState.equals(JobStateView.ONGOING)) {
+                    view.setState(TransportStateView.ONGOING);
+                } else if (jobState.equals(JobStateView.COMPLETED)) {
+                    view.setState(TransportStateView.COMPLETED);
+                }
+                updateRecord(record);
             }
         } catch (TransporterClientException e) {
             e.printStackTrace();
         }
-        updateRecord(record);
         return record.getView();
     }
 
@@ -161,14 +165,9 @@ public class PrimaryMode extends BrokerMode {
     @Override
     public void updateRecord(ViewRecord re) {
         super.updateRecord(re);
-        if (verbose)
-            System.out.printf("Updated record with key %d%n", re.getKey());
-
         if (backupServerWsURL.isPresent()) {
             try {
                 new BrokerClient(backupServerWsURL.get()).updateRecord(re);
-                if (verbose)
-                    System.out.println("Updated record in backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
             }
@@ -181,17 +180,12 @@ public class PrimaryMode extends BrokerMode {
      */
     private void touchBackupServer(String msg, int interval) {
         if (!backupServerWsURL.isPresent()) {
-            if (verbose)
-                System.out.println("No backup server URL was given");
             return;
         }
 
         try {
-            BrokerClient client = new BrokerClient(backupServerWsURL.get());
-
-            client.touch(msg);
-            if (verbose)
-                System.out.println("Touched backup server");
+            new BrokerClient(backupServerWsURL.get()).touch(msg);
+            System.out.print(". ");
         } catch (BrokerClientException e) {
             e.printStackTrace();
         }
@@ -263,7 +257,6 @@ public class PrimaryMode extends BrokerMode {
         record.setKey(maxCurrentKey++);
         record.setView(view);
 
-        // super.updateRecord(record); // update locally
         return record;
     }
 

@@ -23,7 +23,8 @@
 
         <mainclass>pt.upa.broker.BrokerApplication</mainclass>
 
-        <verbose>true</verbose>
+        <interact>true</interact>
+        <verbose>false</verbose>
 
         <ws.ip>localhost</ws.ip>
         <ws.port>8080</ws.port>
@@ -134,6 +135,7 @@
                     <killAfter>-1</killAfter>
                     <mainClass>${mainclass}</mainClass>
                     <arguments>
+                        <argument>${interact}</argument>
                         <argument>${verbose}</argument>
                         <argument>${ws.mode}</argument>
                         <argument>${uddi.ip}</argument>

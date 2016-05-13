@@ -9,7 +9,7 @@ import pt.upa.transporter.ws.cli.*;
 
 
 public class BackupMode extends BrokerMode {
-    private static final int PRIMARY_SERVER_TOUCH_INTERVAL = 10 * 1000;
+    private static final int PRIMARY_SERVER_TOUCH_INTERVAL = 4 * 1000;
 
     private Timer timer = new Timer();
 
@@ -66,7 +66,7 @@ public class BackupMode extends BrokerMode {
     public void touch(String msg) {
         this.touched = true;
         if (verbose)
-            System.out.println("Primary server says: \"" + msg + "\"");
+            System.out.print(". ");
     }
 
     private void recover() {
@@ -76,7 +76,7 @@ public class BackupMode extends BrokerMode {
         }
 
         if (verbose)
-            System.out.println("Failed to receive touch from primary server");
+            System.out.println("X");
 
         timer.cancel();
         timer.purge();

@@ -1,9 +1,7 @@
 package pt.upa.broker.ws;
 
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Optional;
+import pt.upa.broker.BrokerApplication;
+import java.util.*;
 import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
@@ -24,8 +22,6 @@ public abstract class BrokerMode {
         }
         this.port = port;
         this.verbose = port.getEndpoint().isVerbose();
-        if (verbose)
-            System.out.println(this);
     }
 
     public void setVerbose(boolean verbose) {
@@ -33,9 +29,15 @@ public abstract class BrokerMode {
     }
 
     public void updateRecord(ViewRecord re) {
+        if (verbose) {
+            if (this.records.containsKey(re.getKey())) {
+                System.out.printf("Updated record with key %d%n", re.getKey());
+                BrokerApplication.printView(re.getView());
+            } else {
+                System.out.printf("Added record with key %d%n", re.getKey());
+            }
+        }
         records.put(re.getKey(), re);
-        if (verbose)
-            System.out.printf("Added new record with key %d%n", re.getKey());
     }
 
     public Optional<ViewRecord> getRecordByKey(int key) {
