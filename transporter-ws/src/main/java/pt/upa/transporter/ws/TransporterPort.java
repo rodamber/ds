@@ -1,15 +1,19 @@
 package pt.upa.transporter.ws;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.annotation.Resource;
 import javax.jws.HandlerChain;
 import javax.jws.WebService;
 import java.util.Timer;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.TimerTask;
+import javax.xml.ws.WebServiceContext;
+import javax.xml.ws.handler.MessageContext;
 
 @WebService(
     name              = "TransporterWebService",
@@ -21,7 +25,10 @@ import java.util.TimerTask;
 )
 @HandlerChain(file = "/transporter_handler-chain.xml")
 public class TransporterPort implements TransporterPortType {
-
+	@Resource
+	private WebServiceContext webServiceContext;
+	
+	
     private TransporterEndpointManager endpoint;
     private List<JobView> registry = new ArrayList<JobView>();
     private int lastJobID = 0;
@@ -34,15 +41,22 @@ public class TransporterPort implements TransporterPortType {
     TransporterPort() { }
 
     /* TransporterPortType implementation */
-
+    
+    private void updateProperties(){    	
+		MessageContext messageContext = webServiceContext.getMessageContext();
+		messageContext.put("Transporter", endpoint.getWsName());
+    }
+    
     @Override
     public String ping(String name) {
+    	updateProperties();
         return "Ping: " + name;
     }
 
     @Override
     public JobView requestJob(String origin, String destination, int price)
         throws BadLocationFault_Exception, BadPriceFault_Exception {
+    	updateProperties();
 
         int transporterID = getTransporterID(endpoint.getWsName());
 
@@ -88,6 +102,7 @@ public class TransporterPort implements TransporterPortType {
     public JobView decideJob(String id, boolean accept)
         throws BadJobFault_Exception
     {
+    	updateProperties();
         JobView job = searchRegistry(id);
 
         BadJobFault fault = new BadJobFault();
@@ -113,16 +128,19 @@ public class TransporterPort implements TransporterPortType {
 
     @Override
     public JobView jobStatus(String id) {
+    	updateProperties();
         return searchRegistry(id);
     }
 
     @Override
     public List<JobView> listJobs() {
+    	updateProperties();
         return registry;
     }
 
     @Override
     public void clearJobs() {
+    	updateProperties();
         registry.clear();
     }
 

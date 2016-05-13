@@ -2,13 +2,18 @@ package pt.upa.ca;
 
 import javax.jws.WebService;
 
+import pt.upa.ca.exception.InvalidCertificateNameException;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -33,6 +38,15 @@ public class CAImpl implements CA {
 
 	public String ping(String message){
 		return "Ping: " + message;
+	}
+	
+	public String getPEMCertificate(String name) throws InvalidCertificateNameException {
+		try{
+			return readPEMCertificate(CertificatePath + name + ".cer");
+		}
+		catch(IOException e){
+			throw new InvalidCertificateNameException();
+		}
 	}
 	
 	public boolean verifyCertificate(String cert){
@@ -110,5 +124,14 @@ public class CAImpl implements CA {
 			return false;
 		}
 		return true;
+	}
+	
+	private static String readPEMCertificate(String path) throws IOException {
+		return getFileContents(path, StandardCharsets.UTF_8);
+	}
+	
+	private static String getFileContents(String path, Charset encoding) throws IOException {
+		  byte[] encoded = Files.readAllBytes(Paths.get(path));
+		  return new String(encoded, encoding);
 	}
 }

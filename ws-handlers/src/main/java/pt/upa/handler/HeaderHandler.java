@@ -37,7 +37,7 @@ public class HeaderHandler implements SOAPHandler<SOAPMessageContext> {
     public Set<QName> getHeaders() {
         return null;
     }
-
+    
     public boolean handleMessage(SOAPMessageContext smc) {
         System.out.println("AddHeaderHandler: Handling message.");
 
