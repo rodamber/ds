@@ -31,7 +31,7 @@ public abstract class BrokerMode {
     public void updateRecord(ViewRecord re) {
         if (verbose) {
             if (this.records.containsKey(re.getKey())) {
-                System.out.printf("Updated record with key %d%n", re.getKey());
+                System.out.printf("Updated record with key %d: ", re.getKey());
                 BrokerApplication.printView(re.getView());
             } else {
                 System.out.printf("Added record with key %d%n", re.getKey());
