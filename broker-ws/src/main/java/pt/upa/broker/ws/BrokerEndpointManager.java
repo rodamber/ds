@@ -1,5 +1,8 @@
 package pt.upa.broker.ws;
 
+import java.io.*;
+import java.util.*;
+
 import java.io.IOException;
 import javax.xml.ws.Endpoint;
 import pt.ulisboa.tecnico.sdis.ws.uddi.UDDINaming;
@@ -28,10 +31,14 @@ public class BrokerEndpointManager {
     private String wsURL = null;
 
     /** Port implementation */
-    private BrokerPort portImpl = new BrokerPort(this);
+    private BrokerPort portImpl;
+
+    public String getWsURL() {
+        return wsURL;
+    }
 
     /** Obtain Port implementation */
-    public BrokerPortType getPort() {
+    public BrokerPort getPort() {
         return portImpl;
     }
 
@@ -54,20 +61,22 @@ public class BrokerEndpointManager {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        portImpl.setVerbose(verbose);
     }
 
-    /** constructor with provided UDDI location, WS name, and WS URL */
-    public BrokerEndpointManager(String uddiURL, String wsName, String wsURL) {
+    public BrokerEndpointManager(String uddiURL, String wsName, String wsURL,
+                                 String mode, Optional<String> backupWsURL) {
+        this(wsURL, mode, backupWsURL);
         this.uddiURL = uddiURL;
         this.wsName = wsName;
-        this.wsURL = wsURL;
     }
 
-    /** constructor with provided web service URL */
-    public BrokerEndpointManager(String wsURL) {
+    public BrokerEndpointManager(String wsURL, String mode,
+                                 Optional<String> backupWsURL) {
         if (wsURL == null)
             throw new NullPointerException("Web Service URL cannot be null!");
         this.wsURL = wsURL;
+        this.portImpl = new BrokerPort(this, mode, backupWsURL);
     }
 
     /* endpoint management */
@@ -77,7 +86,7 @@ public class BrokerEndpointManager {
             // publish endpoint
             endpoint = Endpoint.create(this.portImpl);
             if (verbose) {
-                System.out.printf("Starting %s%n", wsURL);
+                System.out.printf("Starting %s at %s%n", wsName, wsURL);
             }
             endpoint.publish(wsURL);
         } catch (Exception e) {
@@ -91,27 +100,13 @@ public class BrokerEndpointManager {
         publishToUDDI();
     }
 
-    public void awaitConnections() {
-        if (verbose) {
-            System.out.println("Awaiting connections");
-            System.out.println("Press enter to shutdown");
-        }
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            if (verbose) {
-                System.out.printf("Caught i/o exception when awaiting requests: %s%n", e);
-            }
-        }
-    }
-
     public void stop() throws Exception {
         try {
             if (endpoint != null) {
                 // stop endpoint
                 endpoint.stop();
                 if (verbose) {
-                    System.out.printf("Stopped %s%n", wsURL);
+                    System.out.printf("Stopped %s at %s%n", wsName, wsURL);
                 }
             }
         } catch (Exception e) {
@@ -119,6 +114,7 @@ public class BrokerEndpointManager {
                 System.out.printf("Caught exception when stopping: %s%n", e);
             }
         }
+        portImpl.shutdown();
         this.portImpl = null;
         unpublishFromUDDI();
     }
