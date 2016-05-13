@@ -66,7 +66,7 @@ public class BackupMode extends BrokerMode {
     public void touch(String msg) {
         this.touched = true;
         if (verbose)
-            System.out.print(". ");
+            System.out.println(". ");
     }
 
     private void recover() {
