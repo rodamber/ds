@@ -177,26 +177,15 @@ public class BrokerClient implements BrokerPortType {
     }
 
     @Override
-    public void updateViewState(Integer key, TransportStateView newState) {
-        for (int i = 0; i < MAX_TRIES; ++i)
-            try {
-                port.updateViewState(key, newState);
-                break;
-            } catch(WebServiceException wse) {
-                wse.printStackTrace();
-            }
-    }
-
-    @Override
     public void touch(String name) {
         port.touch(name);
     }
 
     @Override
-    public void addViewRecord(ViewRecord re) {
+    public void updateRecord(ViewRecord re) {
         for (int i = 0; i < MAX_TRIES; ++i)
             try {
-                port.addViewRecord(re);
+                port.updateRecord(re);
                 break;
             } catch(WebServiceException wse) {
                 wse.printStackTrace();

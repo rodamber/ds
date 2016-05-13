@@ -90,18 +90,13 @@ public class BrokerPort implements BrokerPortType {
     }
 
     @Override
-    public void updateViewState(Integer key, TransportStateView newState) {
-        mode.updateViewState(key, newState);
-    }
-
-    @Override
     public void touch(String name) {
         mode.touch(name);
     }
 
     @Override
-    public void addViewRecord(ViewRecord record) {
-        mode.addViewRecord(record);
+    public void updateRecord(ViewRecord record) {
+        mode.updateRecord(record);
     }
 
     public void shutdown() {

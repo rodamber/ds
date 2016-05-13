@@ -32,7 +32,7 @@ public abstract class BrokerMode {
         this.verbose = verbose;
     }
 
-    public void addViewRecord(ViewRecord re) {
+    public void updateRecord(ViewRecord re) {
         records.put(re.getKey(), re);
         if (verbose)
             System.out.printf("Added new record with key %d%n", re.getKey());
@@ -76,14 +76,6 @@ public abstract class BrokerMode {
 
     public abstract TransportView viewTransport(String id)
         throws UnknownTransportFault_Exception;
-
-    public void updateViewState(int key, TransportStateView newState) {
-        final ViewRecord re = getRecordByKey(key).get();
-        re.view.setState(newState);
-        if (verbose)
-            System.out.printf("Updated record with key %d to state %s%n",
-                            re.getKey(), re.view.getState());
-    }
 
     public void touch(String name) {
     }

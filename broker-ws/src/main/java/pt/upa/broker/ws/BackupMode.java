@@ -45,14 +45,20 @@ public class BackupMode extends BrokerMode {
     @Override
     public TransportView viewTransport(String id)
         throws UnknownTransportFault_Exception {
+        Optional<ViewRecord> optRecord = getRecordByViewId(id);
+
+        if (optRecord.isPresent()) {
+            return optRecord.get().getView();
+        }
+
         UnknownTransportFault fault = new UnknownTransportFault();
         fault.setId(id);
         throw new UnknownTransportFault_Exception("Unknown id", fault);
     }
 
     @Override
-    public void addViewRecord(ViewRecord re) {
-        super.addViewRecord(re);
+    public void updateRecord(ViewRecord re) {
+        super.updateRecord(re);
         maxCurrentKey = re.getKey();
     }
 
