@@ -14,6 +14,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.TimerTask;
 import javax.xml.ws.WebServiceContext;
 import javax.xml.ws.handler.MessageContext;
+import javax.xml.ws.handler.MessageContext.Scope;
+
+import pt.upa.transporter.ws.handler.SecurityHandler;
 
 @WebService(
     name              = "TransporterWebService",
@@ -42,21 +45,21 @@ public class TransporterPort implements TransporterPortType {
 
     /* TransporterPortType implementation */
     
-    private void updateProperties(){    	
-		MessageContext messageContext = webServiceContext.getMessageContext();
-		messageContext.put("Transporter", endpoint.getWsName());
+    private void updateSmc(){
+        MessageContext messageContext = webServiceContext.getMessageContext();
+		messageContext.put(SecurityHandler.RESPONSE_PROPERTY, endpoint.getWsName());
     }
     
     @Override
     public String ping(String name) {
-    	updateProperties();
+    	updateSmc();
         return "Ping: " + name;
     }
 
     @Override
     public JobView requestJob(String origin, String destination, int price)
         throws BadLocationFault_Exception, BadPriceFault_Exception {
-    	updateProperties();
+    	updateSmc();
 
         int transporterID = getTransporterID(endpoint.getWsName());
 
@@ -102,7 +105,7 @@ public class TransporterPort implements TransporterPortType {
     public JobView decideJob(String id, boolean accept)
         throws BadJobFault_Exception
     {
-    	updateProperties();
+    	updateSmc();
         JobView job = searchRegistry(id);
 
         BadJobFault fault = new BadJobFault();
@@ -128,19 +131,19 @@ public class TransporterPort implements TransporterPortType {
 
     @Override
     public JobView jobStatus(String id) {
-    	updateProperties();
+    	updateSmc();
         return searchRegistry(id);
     }
 
     @Override
     public List<JobView> listJobs() {
-    	updateProperties();
+    	updateSmc();
         return registry;
     }
 
     @Override
     public void clearJobs() {
-    	updateProperties();
+    	updateSmc();
         registry.clear();
     }
 

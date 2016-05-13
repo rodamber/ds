@@ -1,17 +1,31 @@
-package pt.upa.transporter.ws.handler;
+package pt.upa.transporter.ws.cli.handler;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
 import java.security.SecureRandom;
-import java.security.cert.Certificate;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.ArrayList;
 
-import pt.upa.ca.*;
+import pt.upa.ca.CA;
+import pt.upa.ca.CAImplService;
 import static pt.upa.ca.cli.CAClient.*;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 import static javax.xml.bind.DatatypeConverter.parseHexBinary;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.security.SignatureException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 
 import javax.xml.namespace.QName;
 import javax.xml.soap.Name;
@@ -44,15 +58,13 @@ public class SecurityHandler implements SOAPHandler<SOAPMessageContext> {
 	private CA CAPort = new CAImplService().getCAImplPort();
 	private ArrayList<String> usedNonce = new ArrayList<String>();
 
-	private final static String CERTIFICATE_PATH = "src/main/resources/cer/";
-	private final static String KEYSTORE_PATH = "src/main/resources/jks/";
+	private final static String CERTIFICATE_FILE = "src/main/resources/cer/UpaBroker.cer";
+	private final static String KEYSTORE_FILE = "src/main/resources/jks/UpaBroker.jks";
 	private final static String KEYSTORE_PASSWORD = "ac61d67c18c83e4a6ef4c90c32775e8860945830";
-	private static String KEY_ALIAS;
-	public static String RESPONSE_PROPERTY = "my.transporter.property";
-	public static String REQUEST_PROPERTY = "my.transporter.property";
+	private final static String KEY_ALIAS = "UpaBroker";
 	private final static String KEY_PASSWORD = "ac61d67c18c83e4a6ef4c90c32775e8860945830";
-
-    public static final String CONTEXT_PROPERTY = "my.property";
+	
+	private final PrivateKey privateKey = getPrivateKeyFromKeystore(KEYSTORE_FILE,KEYSTORE_PASSWORD.toCharArray(),KEY_ALIAS,KEY_PASSWORD.toCharArray());
 
     //
     // Handler interface methods
@@ -69,8 +81,9 @@ public class SecurityHandler implements SOAPHandler<SOAPMessageContext> {
 
         try {
             if (outboundElement.booleanValue()) {
+            	String transporter = (String) smc.get("Transporter");
                 System.out.println("Writing body in outbound SOAP message...");
-                
+
                 // get SOAP envelope
                 SOAPMessage msg = smc.getMessage();
                 SOAPPart sp = msg.getSOAPPart();
@@ -100,17 +113,12 @@ public class SecurityHandler implements SOAPHandler<SOAPMessageContext> {
                 Name name = se.createName("name", "ns2", "http://name.upa.pt/");
                 SOAPHeaderElement nameElement = sh.addHeaderElement(name);
                 
-
-
-                String transporter = (String) smc.get(RESPONSE_PROPERTY);
-                
-				KEY_ALIAS = transporter;
-				final PrivateKey privateKey = getPrivateKeyFromKeystore(KEYSTORE_PATH+transporter+".jks",KEYSTORE_PASSWORD.toCharArray(),KEY_ALIAS,KEY_PASSWORD.toCharArray());
-                nameElement.addTextNode(transporter);
+                nameElement.addTextNode(KEY_ALIAS);
                                 
                 // sign body
                 String bodySignature = printHexBinary(makeDigitalSignature(sb.toString().getBytes(), privateKey));
                 digestElement.addTextNode(bodySignature);
+                
 
             } else {
                 System.out.println("Reading body in inbound SOAP message...");
@@ -159,7 +167,7 @@ public class SecurityHandler implements SOAPHandler<SOAPMessageContext> {
                 String pem = CAPort.getPEMCertificate(name);
                 Certificate c = PEMtoCertificate(pem);
                 boolean isValidSignature = verifyDigitalSignature(parseHexBinary(digest),sb.toString().getBytes(),c.getPublicKey());
-                
+
                 if(!isValidSignature){
                     System.out.println("Message received is invalid");
                 	return false;
@@ -200,8 +208,9 @@ public class SecurityHandler implements SOAPHandler<SOAPMessageContext> {
     public void close(MessageContext messageContext) {
     }
 
+    /* */
 
-	public String generateNonce() throws NoSuchAlgorithmException {
+	private String generateNonce() throws NoSuchAlgorithmException {
 		SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
 		final byte array[] = new byte[16];
 		random.nextBytes(array);
@@ -216,7 +225,7 @@ public class SecurityHandler implements SOAPHandler<SOAPMessageContext> {
 	}
 
 
-	public boolean validNonce(String nonce) {
+	private boolean validNonce(String nonce) {
 		if(usedNonce.contains(nonce)){
 			return false;
 		}
