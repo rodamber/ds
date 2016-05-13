@@ -23,8 +23,10 @@ public class PrimaryMode extends BrokerMode {
         this.backupServerWsURL = backupServerWsURL;
         if (backupServerWsURL.isPresent()) {
             touchBackupServer(IM_ALIVE_TOUCH_MSG, IM_ALIVE_TOUCH_INTERVAL);
-            System.out.println("Backup server is running at " +
-                               port.getEndpoint().getWsURL());
+            if (verbose) {
+                System.out.println("Backup server is running at " +
+                                port.getEndpoint().getWsURL());
+            }
         }
     }
 
@@ -60,8 +62,9 @@ public class PrimaryMode extends BrokerMode {
             } catch (TransporterClientException e) {
                 msg += record.getOrgName() + " - " + e.getMessage();
             }
+            msg += "\n";
         }
-        return "Ping: " + msg;
+        return msg;
     }
 
     @Override
@@ -171,12 +174,14 @@ public class PrimaryMode extends BrokerMode {
     @Override
     public void addViewRecord(ViewRecord re) {
         super.addViewRecord(re);
-        System.out.printf("Added new view to primary server with key %d%n", re.getKey());
+        if (verbose)
+            System.out.printf("Added new view to primary server with key %d%n", re.getKey());
 
         if (backupServerWsURL.isPresent()) {
             try {
                 new BrokerClient(backupServerWsURL.get()).addViewRecord(re);
-                System.out.println("Added view to backup server");
+                if (verbose)
+                    System.out.println("Added view to backup server");
             } catch (BrokerClientException e) {
                 e.printStackTrace();
             }
@@ -189,7 +194,8 @@ public class PrimaryMode extends BrokerMode {
      */
     private void touchBackupServer(String msg, int interval) {
         if (!backupServerWsURL.isPresent()) {
-            System.out.println("No backup server URL was given");
+            if (verbose)
+                System.out.println("No backup server URL was given");
             return;
         }
 
@@ -197,7 +203,8 @@ public class PrimaryMode extends BrokerMode {
             BrokerClient client = new BrokerClient(backupServerWsURL.get());
 
             client.touch(msg);
-            System.out.println("Touched backup server");
+            if (verbose)
+                System.out.println("Touched backup server");
         } catch (BrokerClientException e) {
             e.printStackTrace();
         }
@@ -296,7 +303,7 @@ public class PrimaryMode extends BrokerMode {
         }
     }
 
-    private void updateViewInfo(TransportView view, JobView offer) {
+    private void updateViewInfo(ViewRecord record, JobView offer) {
         view.setId(offer.getJobIdentifier());
         view.setPrice(offer.getJobPrice());
         view.setTransporterCompany(offer.getCompanyName());

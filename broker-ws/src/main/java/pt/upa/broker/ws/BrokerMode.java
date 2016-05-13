@@ -15,6 +15,7 @@ public abstract class BrokerMode {
     protected BrokerPort port;
     protected Hashtable<Integer, ViewRecord> records = new Hashtable<>();
 
+    protected boolean verbose = false;
     protected int maxCurrentKey = 0;
 
     public BrokerMode(BrokerPort port) {
@@ -22,12 +23,19 @@ public abstract class BrokerMode {
             throw new IllegalArgumentException("port must not be null");
         }
         this.port = port;
-        System.out.println(this);
+        this.verbose = port.getEndpoint().isVerbose();
+        if (verbose)
+            System.out.println(this);
+    }
+
+    public void setVerbose(boolean verbose) {
+        this.verbose = verbose;
     }
 
     public void addViewRecord(ViewRecord re) {
         records.put(re.getKey(), re);
-        System.out.printf("Added new record with key %d%n", re.getKey());
+        if (verbose)
+            System.out.printf("Added new record with key %d%n", re.getKey());
     }
 
     public Optional<ViewRecord> getRecordByKey(int key) {
@@ -72,8 +80,9 @@ public abstract class BrokerMode {
     public void updateViewState(int key, TransportStateView newState) {
         final ViewRecord re = getRecordByKey(key).get();
         re.view.setState(newState);
-        System.out.printf("Updated record with key %d to state %s%n",
-                          re.getKey(), re.view.getState());
+        if (verbose)
+            System.out.printf("Updated record with key %d to state %s%n",
+                            re.getKey(), re.view.getState());
     }
 
     public void touch(String name) {

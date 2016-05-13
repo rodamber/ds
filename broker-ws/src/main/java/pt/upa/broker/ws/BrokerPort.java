@@ -46,6 +46,10 @@ public class BrokerPort implements BrokerPortType {
         return this.endpoint;
     }
 
+    public void setVerbose(boolean verbose) {
+        mode.setVerbose(verbose);
+    }
+
     public BrokerMode getServerMode() {
         return mode;
     }

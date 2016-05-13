@@ -1,6 +1,7 @@
 package pt.upa.broker.ws;
 
-import java.util.Optional;
+import java.io.*;
+import java.util.*;
 
 import java.io.IOException;
 import javax.xml.ws.Endpoint;
@@ -60,6 +61,7 @@ public class BrokerEndpointManager {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+        portImpl.setVerbose(verbose);
     }
 
     public BrokerEndpointManager(String uddiURL, String wsName, String wsURL,
@@ -98,19 +100,62 @@ public class BrokerEndpointManager {
         publishToUDDI();
     }
 
-    public void awaitConnections() {
-        if (verbose) {
-            System.out.println("Awaiting connections");
-            System.out.println("Press enter to shutdown");
-        }
-        try {
-            System.in.read();
-        } catch (IOException e) {
-            if (verbose) {
-                System.out.printf("Caught i/o exception when awaiting requests: %s%n", e);
+    public void awaitConnections() throws IOException {
+        System.out.println("Awaiting connections");
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String input;
+        final String prompt = ">>> ";
+        final String helperMsg = "Enter an option [clear, list, view, ping, request or quit]";
+
+        System.out.println(helperMsg);
+        System.out.print(prompt);
+
+        while (!(input = in.readLine()).equals("quit")) {
+            try {
+                if (input.equals("clear")) {
+                    portImpl.clearTransports();
+                    System.out.println("Cleared transports.");
+                } else if (input.equals("list")) {
+                    System.out.println("Transport list: ");
+                    portImpl.listTransports().stream().forEach(this::printView);
+                } else if (input.equals("view")) {
+                    System.out.println("Enter the id: ");
+                    System.out.print(prompt);
+                    input = in.readLine();
+                    printView(portImpl.viewTransport(input));
+                } else if (input.equals("ping")) {
+                    System.out.println(portImpl.ping("Hello!"));
+                } else if (input.equals("request")) {
+                    System.out.println("Enter the origin: ");
+                    System.out.print(prompt);
+                    String origin = in.readLine();
+                    System.out.println("Enter the destination: ");
+                    System.out.print(prompt);
+                    String destination = in.readLine();
+                    System.out.println("Enter the price: ");
+                    System.out.print(prompt);
+                    String price = in.readLine();
+                    portImpl.requestTransport(origin, destination, Integer.parseInt(price));
+                } else {
+                    if (input != "") {
+                        System.out.println("Unknown option.");
+                    }
+                }
+                System.out.println(helperMsg);
+                System.out.print(prompt);
+            } catch (Exception e) {
+                if (verbose) {
+                    e.printStackTrace();
+                }
             }
         }
         portImpl.shutdown();
+    }
+
+    private void printView(TransportView view) {
+        System.out.printf("Id: %s; Origin: %s; Destination: %s; Status: %s%n",
+                          view.getId(), view.getOrigin(), view.getDestination(),
+                          view.getState());
     }
 
     public void stop() throws Exception {

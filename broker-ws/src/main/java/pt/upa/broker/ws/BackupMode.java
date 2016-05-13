@@ -59,7 +59,8 @@ public class BackupMode extends BrokerMode {
     @Override
     public void touch(String msg) {
         this.touched = true;
-        System.out.println("Primary server says: \"" + msg + "\"");
+        if (verbose)
+            System.out.println("Primary server says: \"" + msg + "\"");
     }
 
     private void recover() {
@@ -68,13 +69,15 @@ public class BackupMode extends BrokerMode {
             return;
         }
 
-        System.out.println("Failed to receive touch from primary server");
+        if (verbose)
+            System.out.println("Failed to receive touch from primary server");
 
         timer.cancel();
         timer.purge();
         port.setServerMode(new PrimaryMode(this));
 
-        System.out.println("Backup server is now the primary server");
+        if (verbose)
+            System.out.println("Backup server is now the primary server");
     }
 
     @Override
