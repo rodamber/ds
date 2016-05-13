@@ -1,6 +1,7 @@
 package pt.upa.broker.ws;
 
 import java.util.*;
+import java.util.Collections;
 import static java.util.stream.Collectors.toList;
 
 import pt.upa.broker.ws.cli.*;
@@ -11,6 +12,8 @@ import pt.ulisboa.tecnico.sdis.ws.uddi.*;
 public class PrimaryMode extends BrokerMode {
     private static final int IM_ALIVE_TOUCH_INTERVAL = 2 * 1000;
     private static final String IM_ALIVE_TOUCH_MSG = "I'm Alive";
+
+    private int maxCurrentKey = 0;
 
     private Optional<String> backupServerWsURL = Optional.empty();
 
@@ -41,6 +44,9 @@ public class PrimaryMode extends BrokerMode {
     public PrimaryMode(BackupMode backupMode) {
         this(backupMode.port);
         this.records = backupMode.records;
+        if (!records.isEmpty()) {
+            this.maxCurrentKey = Collections.max(records.keySet());
+        }
 
         try {
             port.getEndpoint().publishToUDDI();

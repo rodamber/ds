@@ -161,8 +161,11 @@ public class BrokerApplication {
     }
 
     public static void printView(TransportView view) {
-        System.out.printf("Id: %s; Origin: %s; Destination: %s; Status: %s%n",
-                          view.getId(), view.getOrigin(), view.getDestination(),
+        System.out.printf("Id: %s; Origin: %s; Destination: %s; Price: %s; State: %s%n",
+                          view.getId(),
+                          view.getOrigin(),
+                          view.getDestination(),
+                          view.getPrice(),
                           view.getState());
     }
 

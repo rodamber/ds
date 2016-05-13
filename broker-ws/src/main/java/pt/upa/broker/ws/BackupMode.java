@@ -59,7 +59,6 @@ public class BackupMode extends BrokerMode {
     @Override
     public void updateRecord(ViewRecord re) {
         super.updateRecord(re);
-        maxCurrentKey = re.getKey();
     }
 
     @Override

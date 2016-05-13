@@ -14,7 +14,6 @@ public abstract class BrokerMode {
     protected Hashtable<Integer, ViewRecord> records = new Hashtable<>();
 
     protected boolean verbose = false;
-    protected int maxCurrentKey = 0;
 
     public BrokerMode(BrokerPort port) {
         if (port == null) {
