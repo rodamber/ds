@@ -185,7 +185,8 @@ public class PrimaryMode extends BrokerMode {
 
         try {
             new BrokerClient(backupServerWsURL.get()).touch(msg);
-            System.out.print(". ");
+            if (verbose)
+                System.out.print(". ");
         } catch (BrokerClientException e) {
             e.printStackTrace();
         }
