@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+    WSDL contract for a UPA CA service
+
+    This WSDL defines the operations provided by the Web Service,
+    and should not be modified.
+
+    For more information, consult sections
+    wsdl:service, wsdl:portType, wsdl:types and wsdl:binding below
+
+-->
+
+<definitions
+    xmlns="http://schemas.xmlsoap.org/wsdl/"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+    xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+    xmlns:tns="http://ws.ca.upa.pt/"
+    targetNamespace="http://ws.ca.upa.pt/"
+    name="CAWebService">
+
+    <types>
+        <xs:schema
+            targetNamespace="http://ws.ca.upa.pt/"
+            version="1.0">
+
+            <xs:complexType name="ping">
+                <xs:sequence>
+                    <xs:element name="name" type="xs:string" minOccurs="0" />
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="ping" type="tns:ping" />
+
+            <xs:complexType name="pingResponse">
+                <xs:sequence>
+                    <xs:element name="return" type="xs:string" minOccurs="0" />
+                </xs:sequence>
+            </xs:complexType>
+            <xs:element name="pingResponse" type="tns:pingResponse" />
+
+        </xs:schema>
+    </types>
+
+    <!--  Messages (use elements defined in the schema) -->
+    <message name="ping">
+        <part name="parameters" element="tns:ping" />
+    </message>
+    <message name="pingResponse">
+        <part name="parameters" element="tns:pingResponse" />
+    </message>
+
+    <!-- Port Type (Interface) -->
+    <portType name="CAPortType">
+        <operation name="ping">
+            <input wsam:Action="http://ws.ca.upa.pt/CAPort/pingRequest"
+                message="tns:ping" />
+            <output wsam:Action="http://ws.ca.upa.pt/CAPort/pingResponse"
+                message="tns:pingResponse" />
+        </operation>
+    </portType>
+
+    <!-- SOAP/HTTP Binding -->
+    <binding name="CAPortSoapHttpBinding" type="tns:CAPortType">
+        <soap:binding transport="http://schemas.xmlsoap.org/soap/http"
+            style="document" />
+
+        <operation name="ping">
+            <soap:operation soapAction="" />
+            <input>
+                <soap:body use="literal" />
+            </input>
+            <output>
+                <soap:body use="literal" />
+            </output>
+        </operation>
+    </binding>
+
+    <!-- Service -->
+    <service name="CAService">
+        <port name="CAPort" binding="tns:CAPortSoapHttpBinding">
+            <soap:address location="http://host:port/ca-ws/endpoint" />
+        </port>
+    </service>
+
+</definitions>

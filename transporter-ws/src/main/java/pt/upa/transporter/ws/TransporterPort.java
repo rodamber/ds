@@ -1,13 +1,22 @@
 package pt.upa.transporter.ws;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.ArrayList;
 import java.util.Arrays;
+
+import javax.annotation.Resource;
+import javax.jws.HandlerChain;
 import javax.jws.WebService;
 import java.util.Timer;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.TimerTask;
+import javax.xml.ws.WebServiceContext;
+import javax.xml.ws.handler.MessageContext;
+import javax.xml.ws.handler.MessageContext.Scope;
+
+import pt.upa.transporter.ws.handler.SecurityHandler;
 
 @WebService(
     name              = "TransporterWebService",
@@ -17,8 +26,12 @@ import java.util.TimerTask;
     portName          = "TransporterPort",
     endpointInterface = "pt.upa.transporter.ws.TransporterPortType"
 )
+@HandlerChain(file = "/transporter_handler-chain.xml")
 public class TransporterPort implements TransporterPortType {
-
+	@Resource
+	private WebServiceContext webServiceContext;
+	
+	
     private TransporterEndpointManager endpoint;
     private List<JobView> registry = new ArrayList<JobView>();
     private int lastJobID = 0;
@@ -31,15 +44,22 @@ public class TransporterPort implements TransporterPortType {
     TransporterPort() { }
 
     /* TransporterPortType implementation */
-
+    
+    private void updateSmc(){
+        MessageContext messageContext = webServiceContext.getMessageContext();
+		messageContext.put(SecurityHandler.RESPONSE_PROPERTY, endpoint.getWsName());
+    }
+    
     @Override
     public String ping(String name) {
+    	updateSmc();
         return "Ping: " + name;
     }
 
     @Override
     public JobView requestJob(String origin, String destination, int price)
         throws BadLocationFault_Exception, BadPriceFault_Exception {
+    	updateSmc();
 
         int transporterID = getTransporterID(endpoint.getWsName());
 
@@ -85,6 +105,7 @@ public class TransporterPort implements TransporterPortType {
     public JobView decideJob(String id, boolean accept)
         throws BadJobFault_Exception
     {
+    	updateSmc();
         JobView job = searchRegistry(id);
 
         BadJobFault fault = new BadJobFault();
@@ -110,16 +131,19 @@ public class TransporterPort implements TransporterPortType {
 
     @Override
     public JobView jobStatus(String id) {
+    	updateSmc();
         return searchRegistry(id);
     }
 
     @Override
     public List<JobView> listJobs() {
+    	updateSmc();
         return registry;
     }
 
     @Override
     public void clearJobs() {
+    	updateSmc();
         registry.clear();
     }
 
