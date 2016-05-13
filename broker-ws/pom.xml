@@ -25,12 +25,18 @@
 
         <verbose>true</verbose>
 
-        <ws.url>http://localhost:8080/broker-ws/endpoint</ws.url>
-        <backup.ws.url></backup.ws.url>
-        <ws.mode>PRIMARY_MODE</ws.mode>
+        <ws.ip>localhost</ws.ip>
+        <ws.port>8080</ws.port>
 
+        <backup.ws.ip>localhost</backup.ws.ip>
+        <backup.ws.port></backup.ws.port>
+
+        <uddi.ip>localhost</uddi.ip>
+        <uddi.port>9090</uddi.port>
+
+        <ws.mode>PRIMARY_MODE</ws.mode>
         <ws.name>UpaBroker</ws.name>
-        <uddi.url>http://localhost:9090</uddi.url>
+
     </properties>
 
     <dependencies>
@@ -129,11 +135,14 @@
                     <mainClass>${mainclass}</mainClass>
                     <arguments>
                         <argument>${verbose}</argument>
-                        <argument>${uddi.url}</argument>
-                        <argument>${ws.name}</argument>
-                        <argument>${ws.url}</argument>
                         <argument>${ws.mode}</argument>
-                        <argument>${backup.ws.url}</argument>
+                        <argument>${uddi.ip}</argument>
+                        <argument>${uddi.port}</argument>
+                        <argument>${ws.name}</argument>
+                        <argument>${ws.ip}</argument>
+                        <argument>${ws.port}</argument>
+                        <argument>${backup.ws.ip}</argument>
+                        <argument>${backup.ws.port}</argument>
                     </arguments>
                 </configuration>
             </plugin>
